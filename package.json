@@ -1,0 +1,32 @@
+{
+  "name": "back-end-hypertube",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "tape tests/*.js | tap-spec",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/42Matt42/Back-end-Hypertube.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/42Matt42/Back-end-Hypertube/issues"
+  },
+  "homepage": "https://github.com/42Matt42/Back-end-Hypertube#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "supertest": "^4.0.2",
+    "tap-spec": "^5.0.0",
+    "tape": "^4.13.2"
+  }
+}
