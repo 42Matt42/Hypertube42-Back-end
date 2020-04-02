@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
+const db = require('./helpers/dbconnect')
 const config = require('./config/config');
 const usersRoutes = require('./routes/users');
 
@@ -18,6 +19,8 @@ const corsOptions = {
 };
 
 const app = express();
+
+const dbc =  db.connect;
 
 app.use(cors(corsOptions));
 

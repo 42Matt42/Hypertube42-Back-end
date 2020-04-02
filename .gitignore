@@ -26,3 +26,4 @@ Thumbs.db
 # project-specific files #
 .idea/
 /node_modules
+.env
