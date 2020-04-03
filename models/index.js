@@ -8,6 +8,8 @@ const basename  = path.basename(__filename);
 
 const db = {};
 
+console.log("sequelize", config.dbUser);
+
 const sequelize = new Sequelize(config.db, config.dbUser, config.dbPassword, {
     host: config.host,
     dialect: 'mysql',
