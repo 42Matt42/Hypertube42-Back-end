@@ -28,6 +28,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/users', usersRoutes);
 
 console.log(config.host);
+console.log(config.dbUser);
+
 
 models.sequelize.sync().then(function() {
     app.listen(config.port, () => {
