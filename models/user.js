@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    var User = sequelize.define('users', {
+    var User = sequelize.define('user', {
         firstName: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -32,9 +32,9 @@ module.exports = (sequelize, DataTypes) => {
         },
 
     },
-        // {
-        //     freezeTableName: true,
-        // }
+        {
+            freezeTableName: true,
+        }
         );
 
 //to sync a table
