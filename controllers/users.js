@@ -8,12 +8,6 @@ exports.login = ((req, res) => {
     if (username && password) {
         console.log("try to login");
 
-        User.findAll({
-            where: {
-                authorId: 2
-            }
-        });
-
         if (username === 'johndoe') {
             if (password === '123456') {
 
