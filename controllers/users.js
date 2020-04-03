@@ -1,11 +1,38 @@
-const User = require('../models/user');
-
+// const User = require('../models/user');
 
 exports.login = ((req, res) => {
-    res.json({
-        message: "login",
-        name: req.query.name,
-        password: req.query.password,
+    let username = req.query.username;
+    let password = req.query.password;
+    console.log(username, password)
+
+    if (username && password) {
+        console.log("try to login");
+
+        User.findAll({
+            where: {
+                authorId: 2
+            }
+        });
+
+        if (username === 'johndoe') {
+            if (password === '123456') {
+
+
+
+                return res.status(200).json({
+                    status: "Success",
+                });
+            }
+            return res.status(403).json({
+                error: "Provide valid password",
+            });
+        }
+        return res.status(403).json({
+            error: "Provide valid username",
+        });
+    }
+    return res.status(400).json({
+        error: "Username/password missing",
     });
 });
 
