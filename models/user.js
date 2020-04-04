@@ -87,6 +87,10 @@ module.exports = (dbc, DataTypes) => {
             },
 
         },
+        {
+
+            freezeTableName: true,
+        }
     );
 
 //to sync a table
