@@ -4,7 +4,7 @@ exports.login = ((req, res) => {
     let username = req.query.username;
     let password = req.query.password;
     if (username && password) {
-        models.users.findOne({
+        models.user.findOne({
             where: {
                 username,
             }
@@ -45,7 +45,7 @@ exports.getUser = ((req, res) => {
     let username = req.params.username;
 
     if (username) {
-        models.users.findOne({
+        models.user.findOne({
             where: {
                 username,
             },
@@ -89,7 +89,7 @@ exports.deleteUser = ((req, res) => {
 exports.postUser = ((req, res) => {
     let {firstName, lastName, email, username, password, photo} = req.query;
 
-    models.users.create({
+    models.user.create({
         firstName, lastName, email, username, password, photo
     })
         .then(user => {
