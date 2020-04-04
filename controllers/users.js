@@ -1,12 +1,38 @@
-const User = require('../models/user');
-
+const models = require('../models');
 
 exports.login = ((req, res) => {
-    res.json({
-        message: "login",
-        name: req.query.name,
-        password: req.query.password,
-    });
+    let username = req.query.username;
+    let password = req.query.password;
+    if (username && password) {
+        models.users.findOne({
+            where:{
+                username: username,
+            }
+        })
+            .then(user => {
+                if (user) {
+                    if (user.password === password) {
+                        //TODO login
+                        return res.status(200).json({
+                            status: "Success",
+                        });
+                    }
+                    return res.status(403).json({
+                        error: "Provide valid password",
+                    });
+                }
+                return res.status(403).json({
+                    error: "Provide valid username",
+                });
+            })
+            .catch(error =>{
+                console.log(error);
+                })
+    } else {
+        return res.status(400).json({
+            error: "Username/password missing",
+        });
+    }
 });
 
 exports.logout = ((req, res) => {

@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+var models = require('./models/');
 
-const db = require('./helpers/dbconnect')
 const config = require('./config/config');
 const usersRoutes = require('./routes/users');
+
 
 const whitelist = ['https://unruffled-benz-398ce5.netlify.com'];
 const corsOptions = {
@@ -20,16 +21,17 @@ const corsOptions = {
 
 const app = express();
 
-const dbc =  db.connect;
-
 app.use(cors(corsOptions));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/users', usersRoutes);
 
-app.listen(config.port, () => {
-    console.log('Server running on port %s', config.port);
+models.dbc.sync().then(function() {
+    app.listen(config.port, () => {
+        console.log('Server running on port %s', config.port);
+    });
+
 });
 
 module.exports = app;
