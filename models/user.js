@@ -9,34 +9,70 @@ module.exports = (dbc, DataTypes) => {
             },
             firstName: {
                 type: DataTypes.STRING,
-                allowNull: false,
+                allowNull: true,
+                validate: {
+                    isNull: function (val){
+                        if (!val){
+                            throw new Error("Please provide first name")
+                        }
+                    }
+                }
             },
             lastName: {
                 type: DataTypes.STRING,
-                allowNull: false,
+                allowNull: true,
+                validate: {
+                    isNull: function (val){
+                        if (!val){
+                            throw new Error("Please provide last name")
+                        }
+                    }
+                }
             },
             email: {
                 type: DataTypes.STRING,
-                allowNull: false,
                 unique: true,
+                allowNull: true,
                 validate: {
-                    isEmail: true,
+                    isEmail: {
+                      args: true,
+                      msg: "Please provide a valid email"
+                    },
+                    isNull: function (val){
+                        if (!val){
+                            throw new Error("Please provide email")
+                        }
+                    }
                 }
             },
             username: {
                 type: DataTypes.STRING,
-                allowNull: false,
+                allowNull: true,
                 unique: true,
                 validate: {
-                    isAlphanumeric: true,
-                    len: [3, 15]
+                    isAlphanumeric: {
+                        args: true,
+                        msg: "Username can contain only letters and numbers"
+                    },
+                    len: {
+                        args: [3, 15],
+                        msg: "Username should contain between 3 and 15 characters"
+                    }
                 }
             },
             password: {
                 type: DataTypes.STRING,
-                allowNull: false,
+                allowNull: true,
                 validate: {
-                    len: [6, 30]
+                    len: {
+                        args: [6, 15],
+                        msg: "Password should contain between 6 and 15 characters"
+                    },
+                    isNull: function (val){
+                        if (!val){
+                            throw new Error("Please provide email")
+                        }
+                    }
                 }
             },
             photo: {
