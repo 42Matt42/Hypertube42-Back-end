@@ -1,41 +1,57 @@
-module.exports = (sequelize, DataTypes) => {
-    var User = sequelize.define('user', {
-        firstName: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        lastName: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        email: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        username: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        password: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        photo: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            defaultValue: 'https://via.placeholder.com/150',
-        },
-        language: {
-            type: DataTypes.ENUM('english', 'french', 'spanish'),
-            allowNull: false,
-            defaultValue: 'english',
-        },
+// const { Sequelize, DataTypes } = require('sequelize');
 
-    },
-        {
-            freezeTableName: true,
-        }
-        );
+module.exports = (dbc, DataTypes) => {
+    const User = dbc.define('users', {
+            id: {
+                type: DataTypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true
+            },
+            firstName: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+            lastName: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+            email: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+                validate: {
+                    isEmail: true,
+                }
+            },
+            username: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+                validate: {
+                    isAlphanumeric: true,
+                    len: [3, 15]
+                }
+            },
+            password: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                validate: {
+                    len: [6, 30]
+                }
+            },
+            photo: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                defaultValue: 'https://via.placeholder.com/150',
+            },
+            language: {
+                type: DataTypes.ENUM('english', 'french', 'spanish'),
+                allowNull: false,
+                defaultValue: 'english',
+            },
+
+        },
+    );
 
 //to sync a table
 //     (async () => {
@@ -44,16 +60,22 @@ module.exports = (sequelize, DataTypes) => {
 //     })();
 
 
-// force: true will drop the table if it already exists
+//create user
     User.sync({force: true}).then(function () {
         // Table created
         return User.create({
-            firstName: 'Jane',
+            firstName: 'John',
             lastName: 'Doe',
             email: 'johndoe@gmail.com',
             username: 'johndoe',
-            password: '123456',
-        });
+            password: '1234567',
+        })
+            .then(function () {
+                console.log("user created");
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
     });
 
     return User;

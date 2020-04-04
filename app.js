@@ -27,11 +27,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/users', usersRoutes);
 
-console.log(config.host);
-console.log(config.dbUser);
-
-
-models.sequelize.sync().then(function() {
+models.dbc.sync().then(function() {
     app.listen(config.port, () => {
         console.log('Server running on port %s', config.port);
     });

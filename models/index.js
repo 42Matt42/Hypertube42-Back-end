@@ -12,18 +12,19 @@ console.log("sequelize", config.dbUser);
 console.log("sequelize", config.db);
 console.log("sequelize", config.host);
 
-const sequelize = new Sequelize(config.db, config.dbUser, config.dbPassword, {
+const dbc = new Sequelize(config.db, config.dbUser, config.dbPassword, {
     host: config.host,
     dialect: 'mysql',
     port: config.dbPort,
     define: {
-        timestamps: false
+        timestamps: false,
+        freezeTableName: true,
     },
 
 });
 
 //test connection
-sequelize
+dbc
     .authenticate()
     .then(function (err) {
         console.log('Connection has been established successfully.');
@@ -36,25 +37,24 @@ sequelize
 fs
     .readdirSync(__dirname)
     .filter(file => {
-        console.log("filter", file);
         return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
     })
     .forEach(file => {
-        console.log(file);
-        var model = sequelize['import'](path.join(__dirname, file));
+        const model = dbc['import'](path.join(__dirname, file));
         db[model.name] = model;
     });
 
+//run associate if exists
+Object.keys(db).forEach(modelName => {
+    if (db[modelName].associate) {
+        db[modelName].associate(db);
+    }
+});
 
-// Object.keys(db).forEach(modelName => {
-//     if (db[modelName].associate) {
-//         db[modelName].associate(db);
-//     }
-// });
 
 
 
-db.sequelize = sequelize;
+db.dbc = dbc;
 db.Sequelize = Sequelize;
 
 module.exports = db;
