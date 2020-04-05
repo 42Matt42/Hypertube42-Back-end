@@ -7,7 +7,7 @@ const config = require('./config/config');
 const usersRoutes = require('./routes/users');
 
 
-const whitelist = ['https://unruffled-benz-398ce5.netlify.com'];
+const whitelist = ['http://localhost:8080','https://unruffled-benz-398ce5.netlify.com'];
 const corsOptions = {
     origin: function (origin, callback) {
         //TODO update later: now allowing origin to be undefined for local tests
