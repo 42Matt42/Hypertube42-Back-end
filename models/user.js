@@ -108,19 +108,19 @@ module.exports = (dbc, DataTypes) => {
 //     User.sync().then(function () {
 //         // Table created
 //         return
-        User.create({
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'johndoe@gmail.com',
-            username: 'johndoe',
-            password: '1234567',
-        })
-            .then(function () {
-                console.log("user created");
-            })
-            .catch(function (err) {
-                console.log(err);
-            });
+//         User.create({
+//             firstName: 'John',
+//             lastName: 'Doe',
+//             email: 'johndoe@gmail.com',
+//             username: 'johndoe',
+//             password: '1234567',
+//         })
+//             .then(function () {
+//                 console.log("user created");
+//             })
+//             .catch(function (err) {
+//                 console.log(err);
+//             });
     // });
 
     return User;
