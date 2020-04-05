@@ -11,8 +11,8 @@ module.exports = (dbc, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true,
                 validate: {
-                    isAlpha: {
-                        args: true,
+                    is: {
+                        args: [/^[a-z]+$/i],
                         msg: "First name can contain only letters"
                     },
                     isNull: function (val){
@@ -26,8 +26,8 @@ module.exports = (dbc, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true,
                 validate: {
-                    isAlpha: {
-                        args: true,
+                    is: {
+                        args: [/^[a-z]+$/i],
                         msg: "Last name can contain only letters"
                     },
                     isNull: function (val){
@@ -97,17 +97,7 @@ module.exports = (dbc, DataTypes) => {
         },
     );
 
-//to sync a table
-//     (async () => {
-//         await User.sync({force: true});
-//         console.log("The table for the User model was just (re)created!");
-//     })();
-
-
 // create user
-//     User.sync().then(function () {
-//         // Table created
-//         return
 //         User.create({
 //             firstName: 'John',
 //             lastName: 'Doe',
@@ -121,7 +111,6 @@ module.exports = (dbc, DataTypes) => {
 //             .catch(function (err) {
 //                 console.log(err);
 //             });
-    // });
 
     return User;
 }

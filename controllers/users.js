@@ -1,4 +1,5 @@
 const models = require('../models');
+const errors = require('../helpers/errors');
 
 exports.login = ((req, res) => {
     let username = req.query.username;
@@ -101,12 +102,7 @@ exports.postUser = ((req, res) => {
             }
         })
         .catch(error => {
-            let errorMessages = [];
-            error.errors.forEach((error) => {
-                    errorMessages.push(error.message)
-                    console.log(error.message)
-                }
-            )
+            let errorMessages = errors.getErrors(error)
             return res.status(405).json({
                 error: errorMessages
             });
