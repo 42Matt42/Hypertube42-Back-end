@@ -27,7 +27,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/users', usersRoutes);
 
-models.dbc.sync().then(function() {
+//force:true to drop all tables every time
+models.dbc.sync({force:true}).then(function() {
     app.listen(config.port, () => {
         console.log('Server running on port %s', config.port);
     });

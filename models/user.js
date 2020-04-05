@@ -11,6 +11,10 @@ module.exports = (dbc, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true,
                 validate: {
+                    isAlpha: {
+                        args: true,
+                        msg: "First name can contain only letters"
+                    },
                     isNull: function (val){
                         if (!val){
                             throw new Error("Please provide first name")
@@ -22,6 +26,10 @@ module.exports = (dbc, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true,
                 validate: {
+                    isAlpha: {
+                        args: true,
+                        msg: "Last name can contain only letters"
+                    },
                     isNull: function (val){
                         if (!val){
                             throw new Error("Please provide last name")
@@ -87,10 +95,6 @@ module.exports = (dbc, DataTypes) => {
             },
 
         },
-        // {
-        //
-        //     freezeTableName: true,
-        // }
     );
 
 //to sync a table
@@ -100,23 +104,24 @@ module.exports = (dbc, DataTypes) => {
 //     })();
 
 
-//create user
-//     User.sync({force: true}).then(function () {
+// create user
+//     User.sync().then(function () {
 //         // Table created
-//         return User.create({
-//             firstName: 'John',
-//             lastName: 'Doe',
-//             email: 'johndoe@gmail.com',
-//             username: 'johndoe',
-//             password: '1234567',
-//         })
-//             .then(function () {
-//                 console.log("user created");
-//             })
-//             .catch(function (err) {
-//                 console.log(err);
-//             });
-//     });
+//         return
+        User.create({
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'johndoe@gmail.com',
+            username: 'johndoe',
+            password: '1234567',
+        })
+            .then(function () {
+                console.log("user created");
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+    // });
 
     return User;
 }
