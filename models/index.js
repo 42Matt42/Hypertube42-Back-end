@@ -18,7 +18,8 @@ const dbc = new Sequelize(config.db, config.dbUser, config.dbPassword, {
     port: config.dbPort,
     define: {
         timestamps: false,
-        freezeTableName: true,
+        logging: console.log,
+        // freezeTableName: true,
     },
 
 });

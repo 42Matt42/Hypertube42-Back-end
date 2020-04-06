@@ -1,12 +1,13 @@
 const models = require('../models');
+const errors = require('../helpers/errors');
 
 exports.login = ((req, res) => {
     let username = req.query.username;
     let password = req.query.password;
     if (username && password) {
-        models.users.findOne({
-            where:{
-                username: username,
+        models.user.findOne({
+            where: {
+                username,
             }
         })
             .then(user => {
@@ -25,9 +26,9 @@ exports.login = ((req, res) => {
                     error: "Provide valid username",
                 });
             })
-            .catch(error =>{
+            .catch(error => {
                 console.log(error);
-                })
+            })
     } else {
         return res.status(400).json({
             error: "Username/password missing",
@@ -42,10 +43,34 @@ exports.logout = ((req, res) => {
 });
 
 exports.getUser = ((req, res) => {
-    res.json({
-        message: "getUser",
-        name: req.params.username,
-    });
+    let username = req.params.username;
+
+    if (username) {
+        models.user.findOne({
+            where: {
+                username,
+            },
+            attributes: {exclude: ['password']}
+        })
+            .then(user => {
+                if (user) {
+                    return res.status(200).json({
+                        status: "Success",
+                        user,
+                    });
+                }
+                return res.status(404).json({
+                    error: "User not found",
+                });
+            })
+            .catch(error => {
+                console.log(error);
+            })
+    } else {
+        return res.status(400).json({
+            error: "Username/password missing",
+        });
+    }
 });
 
 exports.putUser = ((req, res) => {
@@ -63,7 +88,23 @@ exports.deleteUser = ((req, res) => {
 });
 
 exports.postUser = ((req, res) => {
-    res.json({
-        message: "Add new User",
-    });
+    let {firstName, lastName, email, username, password, photo} = req.query;
+
+    models.user.create({
+        firstName, lastName, email, username, password, photo
+    })
+        .then(user => {
+            if (user) {
+                return res.status(200).json({
+                    status: "Success",
+                    "id": user.id
+                });
+            }
+        })
+        .catch(error => {
+            let errorMessages = errors.getErrors(error)
+            return res.status(405).json({
+                error: errorMessages
+            });
+        })
 });
