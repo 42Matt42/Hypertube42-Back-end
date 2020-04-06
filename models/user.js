@@ -73,8 +73,8 @@ module.exports = (dbc, DataTypes) => {
                 allowNull: true,
                 validate: {
                     len: {
-                        args: [6, 15],
-                        msg: "Password should contain between 6 and 15 characters"
+                        args: [6, 60],
+                        msg: "Password should contain between 6 and 60 characters"
                     },
                     isNull: function (val){
                         if (!val){

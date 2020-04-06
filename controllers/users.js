@@ -1,5 +1,8 @@
 const models = require('../models');
 const errors = require('../helpers/errors');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const config = require('../config/config');
 
 exports.login = ((req, res) => {
     let username = req.query.username;
@@ -12,18 +15,23 @@ exports.login = ((req, res) => {
         })
             .then(user => {
                 if (user) {
-                    if (user.password === password) {
-                        //TODO login
+                    if (bcrypt.compareSync(password, user.password)) {
+                        let token = jwt.sign({ id: user._id }, config.jwt, {
+                            expiresIn: 86400 // expires in 24 hours
+                        });
                         return res.status(200).json({
                             status: "Success",
+                            token
                         });
                     }
                     return res.status(403).json({
                         error: "Provide valid password",
+                        token: null
                     });
                 }
                 return res.status(403).json({
                     error: "Provide valid username",
+                    token: null
                 });
             })
             .catch(error => {
@@ -34,12 +42,6 @@ exports.login = ((req, res) => {
             error: "Username/password missing",
         });
     }
-});
-
-exports.logout = ((req, res) => {
-    res.json({
-        message: "logout",
-    });
 });
 
 exports.getUser = ((req, res) => {
@@ -80,24 +82,25 @@ exports.putUser = ((req, res) => {
     });
 });
 
-exports.deleteUser = ((req, res) => {
-    res.json({
-        message: "delete User",
-        name: req.params.username,
-    });
-});
-
 exports.postUser = ((req, res) => {
     let {firstName, lastName, email, username, password, photo} = req.query;
-
+    if (password.length > 15 || password.length < 6){
+        return res.status(405).json({
+            error: "Password should contain between 6 and 15 characters"
+        });
+    }
+    let hashedPassword = bcrypt.hashSync(password, 8);
     models.user.create({
-        firstName, lastName, email, username, password, photo
+        firstName, lastName, email, username, password:hashedPassword, photo
     })
         .then(user => {
             if (user) {
+                let token = jwt.sign({ id: user.id }, config.jwt, {
+                    expiresIn: 86400 // expires in 24 hours
+                });
                 return res.status(200).json({
                     status: "Success",
-                    "id": user.id
+                    token,
                 });
             }
         })
