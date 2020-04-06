@@ -56,7 +56,7 @@ exports.getUser = ((req, res) => {
                 if (user) {
                     return res.status(200).json({
                         status: "Success",
-                        user
+                        user,
                     });
                 }
                 return res.status(404).json({

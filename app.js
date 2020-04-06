@@ -31,8 +31,8 @@ app.use('/users', usersRoutes);
 models.dbc.sync({force:true}).then(function() {
     app.listen(config.port, () => {
         console.log('Server running on port %s', config.port);
+        app.emit("appStarted");
     });
-
 });
 
 module.exports = app;
