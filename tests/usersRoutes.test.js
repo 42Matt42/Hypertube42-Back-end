@@ -147,3 +147,18 @@ test('Login invalid', function (t) {
             t.end(err);
         });
 });
+
+test('Put valid', function (t) {
+    request(app)
+        .post('/users/login')
+        .send({
+            username: '123',
+            password: '123123',
+        })
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end(function (err, res) {
+            t.error(err, 'No error');
+            t.end();
+        });
+});
