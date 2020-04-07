@@ -17,23 +17,29 @@ exports.login = ((req, res) => {
                 if (user) {
                     if (bcrypt.compareSync(password, user.password)) {
                         console.log(user.id, user.username)
-                        let token = jwt.sign({ id: user.id, username: user.username }, config.jwt, {
-                            expiresIn: 86400 // expires in 24 hours
+
+                        jwt.sign({ id: user.id, username: user.username }, config.jwt, {
+                            expiresIn: 86400 }, (err, token) => {
+                            if (err)
+                                return res.status(500).json({ error: 'Failed to create token.' });
+
+                            return res.status(200).json({
+                                status: "Success",
+                                token,
+                            });
                         });
-                        return res.status(200).json({
-                            status: "Success",
-                            token
+                    } else {
+                        return res.status(403).json({
+                            error: "Provide valid password",
+                            token: null
                         });
                     }
+                } else {
                     return res.status(403).json({
-                        error: "Provide valid password",
+                        error: "Provide valid username",
                         token: null
                     });
                 }
-                return res.status(403).json({
-                    error: "Provide valid username",
-                    token: null
-                });
             })
             .catch(error => {
                 console.log(error);
@@ -99,13 +105,16 @@ exports.postUser = ((req, res) => {
     })
         .then(user => {
             if (user) {
-                let token = jwt.sign({ id: user.id, username: user.username }, config.jwt, {
-                    expiresIn: 86400 // expires in 24 hours
+                jwt.sign({ id: user.id, username: user.username }, config.jwt, {
+                    expiresIn: 86400 }, (err, token) => {
+                    if (err)
+                        return res.status(500).json({ error: 'Failed to create token.' });
+                    return res.status(200).json({
+                        status: "Success",
+                        token,
+                    });
                 });
-                return res.status(200).json({
-                    status: "Success",
-                    token,
-                });
+
             }
         })
         .catch(error => {
