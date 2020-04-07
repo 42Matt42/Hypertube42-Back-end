@@ -16,7 +16,8 @@ exports.login = ((req, res) => {
             .then(user => {
                 if (user) {
                     if (bcrypt.compareSync(password, user.password)) {
-                        let token = jwt.sign({ id: user._id }, config.jwt, {
+                        console.log(user.id, user.username)
+                        let token = jwt.sign({ id: user.id, username: user.username }, config.jwt, {
                             expiresIn: 86400 // expires in 24 hours
                         });
                         return res.status(200).json({
