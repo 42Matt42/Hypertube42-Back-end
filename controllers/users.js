@@ -23,15 +23,23 @@ exports.login = ((req, res) => {
                         });
                     }
                     if (bcrypt.compareSync(password, user.password)) {
-                        jwt.sign({id: user.id, username: user.username}, config.jwt, {
-                            expiresIn: 86400
-                        }, (err, token) => {
+                        let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+                        jwt.sign({
+                            exp: exp,
+                            data: {
+                                id: user.id,
+                                username: user.username
+                            }
+                        }, config.jwt, (err, token) => {
                             if (err){
                                 return res.status(500).json({error: 'Failed to create token.'});
                                 }
                             return res.status(200).json({
                                 status: "Success",
-                                token,
+                                token: {
+                                    exp,
+                                    code: token,
+                                },
                             });
                         });
                     } else {
@@ -143,16 +151,16 @@ exports.postUser = ((req, res, next) => {
     })
         .then(user => {
             if (user) {
-                jwt.sign({id: user.id, username: user.username}, config.jwt, {
-                    expiresIn: 86400
-                }, (err, token) => {
-                    if (err)
-                        return res.status(500).json({error: 'Failed to create token.'});
+                // jwt.sign({id: user.id, username: user.username}, config.jwt, {
+                //     expiresIn: 86400
+                // }, (err, token) => {
+                //     if (err)
+                //         return res.status(500).json({error: 'Failed to create token.'});
                     return res.status(200).json({
                         status: "Success",
-                        token,
+                        // token,
                     });
-                });
+                // });
             }
         })
         .catch(error => {
