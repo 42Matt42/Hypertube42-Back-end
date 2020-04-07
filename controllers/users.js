@@ -99,6 +99,9 @@ exports.putUser = ((req, res, next) => {
     //TODO handle email update
     if (username) {
         let {firstName, lastName, email, password} = req.body;
+        if (username != req.username){
+            return res.status(403).send({ error: 'Unauthorized' });
+        }
         console.log(firstName, lastName, email, username, password)
         if (password  && auth.checkPassword(req, res, next, password)) {
             password = bcrypt.hashSync(password, 8);
