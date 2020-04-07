@@ -15,7 +15,14 @@ const token = () => {
 test('Post valid user', function (t) {
     async.waterfall([
             (cb) =>
-                request(app).post('/users/user?email=123@gmail.com&username=123&firstName=first&lastName=last&password=123123')
+                request(app).post('/users/user')
+                    .send({
+                        username: '123',
+                        password: '123123',
+                        email: '123@gmail.com',
+                        firstName: 'first',
+                        lastName: 'last'
+                    })
                     .expect('Content-Type', /json/)
                     .expect(200, cb),
             (results, cb) => {
@@ -33,7 +40,13 @@ test('Post valid user', function (t) {
 test('Post invalid user', function (t) {
     async.waterfall([
             (cb) =>
-                request(app).post('/users/user/?email=123@g.om&username=123&firstName=first&lastName=last')
+                request(app).post('/users/user')
+                    .send({
+                        username: '123',
+                        password: '123123',
+                        firstName: 'first',
+                        lastName: 'last'
+                    })
                     .expect('Content-Type', /json/)
                     .expect(405, cb),
             (results, cb) => {
@@ -41,7 +54,13 @@ test('Post invalid user', function (t) {
                 cb(null, results);
             },
             (results, cb) =>
-                request(app).post('/users/user/?email=123@g.om&username=123&firstName=first&password=123123')
+                request(app).post('/users/user')
+                    .send({
+                        username: '123',
+                        password: '123123',
+                        email: '123@gmail.com',
+                        firstName: 'first',
+                    })
                     .expect('Content-Type', /json/)
                     .expect(405, cb),
             (results, cb) => {
@@ -50,6 +69,13 @@ test('Post invalid user', function (t) {
             },
             (results, cb) =>
                 request(app).post('/users/user?email=123@gmail.com&username=123&firstName=first&lastName=last&password=123123')
+                    .send({
+                        username: '123',
+                        password: '123123',
+                        email: '123@gmail.com',
+                        firstName: 'first',
+                        lastName: 'last'
+                    })
                     .expect('Content-Type', /json/)
                     .expect(405, cb),
         (results, cb) => {
@@ -83,7 +109,7 @@ test('Get valid user', function (t) {
 test('Get invalid user', function (t) {
     request(app)
         .get('/users/user/12345')
-        .set({"x-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiIxMjMiLCJpYXQiOjE1ODYyNDc3MzYsImV4cCI6MTU4NjMzNDEzNn0.fL-nADeWgB23gCGTPiTQE5OOikCdaQwaQuEaqHCXT5c"})
+        .set({"x-access-token": token()})
         .expect('Content-Type', /json/)
         .expect(404)
         .end(function(err, res) {
@@ -95,7 +121,11 @@ test('Get invalid user', function (t) {
 
 test('Login valid', function (t) {
     request(app)
-        .get('/users/login?username=123&password=123123')
+        .post('/users/login')
+        .send({
+            username: '123',
+            password: '123123',
+        })
         .expect('Content-Type', /json/)
         .expect(200)
         .end(function (err, res) {
@@ -106,7 +136,11 @@ test('Login valid', function (t) {
 
 test('Login invalid', function (t) {
     request(app)
-        .get('/users/login?username=123&password=12312')
+        .post('/users/login')
+        .send({
+            username: '123',
+            password: '12312',
+        })
         .expect('Content-Type', /json/)
         .expect(403)
         .end(function(err, res) {
