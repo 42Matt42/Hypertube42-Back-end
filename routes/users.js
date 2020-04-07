@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const usersController = require('../controllers/users')
-const verifyToken = require('../helpers/auth')
+const auth = require('../helpers/auth')
 
 router.post('/login', usersController.login);
 
 // router.get('/logout', usersController.logout);
 
 router.route('/user/:username')
-    .get(verifyToken, usersController.getUser)
-    .put(verifyToken, usersController.putUser)
+    .get(auth.verifyToken, usersController.getUser)
+    .put(auth.verifyToken, usersController.putUser)
 
 
 router.post('/user', usersController.postUser);

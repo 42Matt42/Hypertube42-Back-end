@@ -3,6 +3,7 @@ const errors = require('../helpers/errors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const config = require('../config/config');
+const auth = require('../helpers/auth')
 
 exports.login = ((req, res) => {
     let username = req.body.username;
@@ -87,18 +88,13 @@ exports.getUser = ((req, res) => {
     }
 });
 
-exports.putUser = ((req, res) => {
+exports.putUser = ((req, res, next) => {
     let username = req.params.username;
     //TODO handle email update
     if (username) {
         let {firstName, lastName, email, password} = req.body;
         console.log(firstName, lastName, email, username, password)
-        if (password) {
-            if (password.length > 15 || password.length < 6) {
-                return res.status(405).json({
-                    error: "Password should contain between 6 and 15 characters"
-                });
-            }
+        if (password  && auth.checkPassword(req, res, next, password)) {
             password = bcrypt.hashSync(password, 8);
         }
         models.user.update({
@@ -128,14 +124,9 @@ exports.putUser = ((req, res) => {
     }
 });
 
-exports.postUser = ((req, res) => {
+exports.postUser = ((req, res, next) => {
     let {firstName, lastName, email, username, password, photo} = req.body;
-    if (password) {
-        if (password.length > 15 || password.length < 6) {
-            return res.status(405).json({
-                error: "Password should contain between 6 and 15 characters"
-            });
-        }
+    if (password && auth.checkPassword(req, res, next, password)) {
         password = bcrypt.hashSync(password, 8);
     }
     models.user.create({
