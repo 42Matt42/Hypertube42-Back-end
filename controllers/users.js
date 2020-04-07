@@ -5,8 +5,8 @@ const bcrypt = require('bcryptjs');
 const config = require('../config/config');
 
 exports.login = ((req, res) => {
-    let username = req.query.username;
-    let password = req.query.password;
+    let username = req.body.username;
+    let password = req.body.password;
     if (username && password) {
         models.user.findOne({
             where: {
@@ -89,6 +89,8 @@ exports.getUser = ((req, res) => {
 });
 
 exports.putUser = ((req, res) => {
+    let {firstName, lastName, email, username, password, photo} = req.query;
+    console.log(firstName, lastName, email, username, password, photo)
     res.json({
         message: "update User",
         name: req.params.username,
@@ -96,7 +98,7 @@ exports.putUser = ((req, res) => {
 });
 
 exports.postUser = ((req, res) => {
-    let {firstName, lastName, email, username, password, photo} = req.query;
+    let {firstName, lastName, email, username, password, photo} = req.body;
     let hashedPassword;
     if (password) {
         if (password.length > 15 || password.length < 6) {
