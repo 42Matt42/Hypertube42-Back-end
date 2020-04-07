@@ -78,7 +78,7 @@ module.exports = (dbc, DataTypes) => {
                     },
                     isNull: function (val){
                         if (!val){
-                            throw new Error("Please provide email")
+                            throw new Error("Please provide password")
                         }
                     }
                 }
