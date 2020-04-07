@@ -43,6 +43,9 @@ exports.login = ((req, res) => {
             })
             .catch(error => {
                 console.log(error);
+                return res.status(400).json({
+                    error: "Database error",
+                });
             })
     } else {
         return res.status(400).json({
@@ -74,10 +77,13 @@ exports.getUser = ((req, res) => {
             })
             .catch(error => {
                 console.log(error);
+                return res.status(500).json({
+                    error: "Database error",
+                });
             })
     } else {
         return res.status(400).json({
-            error: "Username/password missing",
+            error: "Username missing",
         });
     }
 });
@@ -114,7 +120,6 @@ exports.postUser = ((req, res) => {
                         token,
                     });
                 });
-
             }
         })
         .catch(error => {
