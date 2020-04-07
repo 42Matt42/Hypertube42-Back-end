@@ -1,5 +1,8 @@
 const models = require('../models');
 const errors = require('../helpers/errors');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const config = require('../config/config');
 
 exports.login = ((req, res) => {
     let username = req.query.username;
@@ -12,34 +15,43 @@ exports.login = ((req, res) => {
         })
             .then(user => {
                 if (user) {
-                    if (user.password === password) {
-                        //TODO login
-                        return res.status(200).json({
-                            status: "Success",
+                    if (bcrypt.compareSync(password, user.password)) {
+                        console.log(user.id, user.username)
+
+                        jwt.sign({ id: user.id, username: user.username }, config.jwt, {
+                            expiresIn: 86400 }, (err, token) => {
+                            if (err)
+                                return res.status(500).json({ error: 'Failed to create token.' });
+
+                            return res.status(200).json({
+                                status: "Success",
+                                token,
+                            });
+                        });
+                    } else {
+                        return res.status(403).json({
+                            error: "Provide valid password",
+                            token: null
                         });
                     }
+                } else {
                     return res.status(403).json({
-                        error: "Provide valid password",
+                        error: "Provide valid username",
+                        token: null
                     });
                 }
-                return res.status(403).json({
-                    error: "Provide valid username",
-                });
             })
             .catch(error => {
                 console.log(error);
+                return res.status(400).json({
+                    error: "Database error",
+                });
             })
     } else {
         return res.status(400).json({
             error: "Username/password missing",
         });
     }
-});
-
-exports.logout = ((req, res) => {
-    res.json({
-        message: "logout",
-    });
 });
 
 exports.getUser = ((req, res) => {
@@ -65,10 +77,13 @@ exports.getUser = ((req, res) => {
             })
             .catch(error => {
                 console.log(error);
+                return res.status(500).json({
+                    error: "Database error",
+                });
             })
     } else {
         return res.status(400).json({
-            error: "Username/password missing",
+            error: "Username missing",
         });
     }
 });
@@ -80,28 +95,35 @@ exports.putUser = ((req, res) => {
     });
 });
 
-exports.deleteUser = ((req, res) => {
-    res.json({
-        message: "delete User",
-        name: req.params.username,
-    });
-});
-
 exports.postUser = ((req, res) => {
     let {firstName, lastName, email, username, password, photo} = req.query;
-
+    let hashedPassword;
+    if (password) {
+        if (password.length > 15 || password.length < 6) {
+            return res.status(405).json({
+                error: "Password should contain between 6 and 15 characters"
+            });
+        }
+        hashedPassword = bcrypt.hashSync(password, 8);
+    }
     models.user.create({
-        firstName, lastName, email, username, password, photo
+        firstName, lastName, email, username, password:hashedPassword, photo
     })
         .then(user => {
             if (user) {
-                return res.status(200).json({
-                    status: "Success",
-                    "id": user.id
+                jwt.sign({ id: user.id, username: user.username }, config.jwt, {
+                    expiresIn: 86400 }, (err, token) => {
+                    if (err)
+                        return res.status(500).json({ error: 'Failed to create token.' });
+                    return res.status(200).json({
+                        status: "Success",
+                        token,
+                    });
                 });
             }
         })
         .catch(error => {
+            // console.log(error)
             let errorMessages = errors.getErrors(error)
             return res.status(405).json({
                 error: errorMessages

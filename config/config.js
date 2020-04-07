@@ -7,6 +7,7 @@ const dbPort = process.env.DBPORT;
 const dbUser = process.env.DBUSER;
 const dbPassword = process.env.DBPASSWORD;
 const db = process.env.DB;
+const jwt = process.env.JWT;
 module.exports = {
     port,
     host,
@@ -14,4 +15,5 @@ module.exports = {
     dbUser,
     dbPassword,
     db,
+    jwt,
 }
