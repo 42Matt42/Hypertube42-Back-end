@@ -16,12 +16,11 @@ exports.login = ((req, res) => {
             .then(user => {
                 if (user) {
                     if (bcrypt.compareSync(password, user.password)) {
-                        console.log(user.id, user.username)
-
-                        jwt.sign({ id: user.id, username: user.username }, config.jwt, {
-                            expiresIn: 86400 }, (err, token) => {
+                        jwt.sign({id: user.id, username: user.username}, config.jwt, {
+                            expiresIn: 86400
+                        }, (err, token) => {
                             if (err)
-                                return res.status(500).json({ error: 'Failed to create token.' });
+                                return res.status(500).json({error: 'Failed to create token.'});
 
                             return res.status(200).json({
                                 status: "Success",
@@ -89,34 +88,66 @@ exports.getUser = ((req, res) => {
 });
 
 exports.putUser = ((req, res) => {
-    let {firstName, lastName, email, username, password, photo} = req.query;
-    console.log(firstName, lastName, email, username, password, photo)
-    res.json({
-        message: "update User",
-        name: req.params.username,
-    });
+    let username = req.params.username;
+    //TODO handle email update
+    if (username) {
+        let {firstName, lastName, email, password} = req.body;
+        console.log(firstName, lastName, email, username, password)
+        if (password) {
+            if (password.length > 15 || password.length < 6) {
+                return res.status(405).json({
+                    error: "Password should contain between 6 and 15 characters"
+                });
+            }
+            password = bcrypt.hashSync(password, 8);
+        }
+        models.user.update({
+                firstName, lastName, email, username, password
+            }, {
+                where: {
+                    username
+                }
+            }
+        )
+            .then(() => {
+                        return res.status(200).json({
+                            status: "Success",
+                        });
+            })
+            .catch(error => {
+                console.log(error)
+                let errorMessages = errors.getErrors(error)
+                return res.status(405).json({
+                    error: errorMessages
+                });
+            })
+    }else {
+        return res.status(400).json({
+            error: "Username missing",
+        });
+    }
 });
 
 exports.postUser = ((req, res) => {
     let {firstName, lastName, email, username, password, photo} = req.body;
-    let hashedPassword;
     if (password) {
         if (password.length > 15 || password.length < 6) {
             return res.status(405).json({
                 error: "Password should contain between 6 and 15 characters"
             });
         }
-        hashedPassword = bcrypt.hashSync(password, 8);
+        password = bcrypt.hashSync(password, 8);
     }
     models.user.create({
-        firstName, lastName, email, username, password:hashedPassword, photo
+        firstName, lastName, email, username, password, photo
     })
         .then(user => {
             if (user) {
-                jwt.sign({ id: user.id, username: user.username }, config.jwt, {
-                    expiresIn: 86400 }, (err, token) => {
+                jwt.sign({id: user.id, username: user.username}, config.jwt, {
+                    expiresIn: 86400
+                }, (err, token) => {
                     if (err)
-                        return res.status(500).json({ error: 'Failed to create token.' });
+                        return res.status(500).json({error: 'Failed to create token.'});
                     return res.status(200).json({
                         status: "Success",
                         token,
