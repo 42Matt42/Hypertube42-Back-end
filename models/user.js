@@ -15,8 +15,8 @@ module.exports = (dbc, DataTypes) => {
                         args: [/^[a-z]+$/i],
                         msg: "First name can contain only letters"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide first name")
                         }
                     }
@@ -30,8 +30,8 @@ module.exports = (dbc, DataTypes) => {
                         args: [/^[a-z]+$/i],
                         msg: "Last name can contain only letters"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide last name")
                         }
                     }
@@ -43,11 +43,11 @@ module.exports = (dbc, DataTypes) => {
                 allowNull: true,
                 validate: {
                     isEmail: {
-                      args: true,
-                      msg: "Please provide a valid email"
+                        args: true,
+                        msg: "Please provide a valid email"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide email")
                         }
                     }
@@ -76,8 +76,8 @@ module.exports = (dbc, DataTypes) => {
                         args: [6, 60],
                         msg: "Password should contain between 6 and 60 characters"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide password")
                         }
                     }
@@ -93,7 +93,11 @@ module.exports = (dbc, DataTypes) => {
                 allowNull: false,
                 defaultValue: 'english',
             },
-
+            disabled: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false, //TODO should be true
+            },
         },
     );
 

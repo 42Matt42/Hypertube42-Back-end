@@ -16,13 +16,19 @@ exports.login = ((req, res) => {
         })
             .then(user => {
                 if (user) {
+                    if (user.disabled){
+                        return res.status(403).json({
+                            error: "User is disabled",
+                            token: null
+                        });
+                    }
                     if (bcrypt.compareSync(password, user.password)) {
                         jwt.sign({id: user.id, username: user.username}, config.jwt, {
                             expiresIn: 86400
                         }, (err, token) => {
-                            if (err)
+                            if (err){
                                 return res.status(500).json({error: 'Failed to create token.'});
-
+                                }
                             return res.status(200).json({
                                 status: "Success",
                                 token,
