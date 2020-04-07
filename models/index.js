@@ -1,5 +1,4 @@
 //reference: https://sequelize.readthedocs.io/en/1.7.0/articles/express/
-
 const {Sequelize} = require('sequelize');
 const config = require('../config/config');
 const fs        = require('fs');
@@ -19,7 +18,6 @@ const dbc = new Sequelize(config.db, config.dbUser, config.dbPassword, {
     define: {
         timestamps: false,
         logging: console.log,
-        // freezeTableName: true,
     },
 
 });
@@ -51,9 +49,6 @@ Object.keys(db).forEach(modelName => {
         db[modelName].associate(db);
     }
 });
-
-
-
 
 db.dbc = dbc;
 db.Sequelize = Sequelize;
