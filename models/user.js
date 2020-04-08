@@ -96,25 +96,18 @@ module.exports = (dbc, DataTypes) => {
             disabled: {
                 type: DataTypes.BOOLEAN,
                 allowNull: false,
-                defaultValue: false, //TODO should be true
+                defaultValue: true,
             },
+            token: {
+                type: DataTypes.UUID,
+                defaultValue: DataTypes.UUIDV4,
+            },
+        token_creation: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
         },
     );
-
-// create user
-//         User.create({
-//             firstName: 'John',
-//             lastName: 'Doe',
-//             email: 'johndoe@gmail.com',
-//             username: 'johndoe',
-//             password: '1234567',
-//         })
-//             .then(function () {
-//                 console.log("user created");
-//             })
-//             .catch(function (err) {
-//                 console.log(err);
-//             });
 
     return User;
 }

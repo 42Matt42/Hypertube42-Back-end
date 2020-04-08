@@ -5,13 +5,12 @@ const auth = require('../helpers/auth')
 
 router.post('/login', usersController.login);
 
-// router.get('/logout', usersController.logout);
-
 router.route('/user/:username')
-    .get(auth.verifyToken, usersController.getUser)
+    .get(usersController.getUser)
     .put(auth.verifyToken, usersController.putUser)
 
 
 router.post('/user', usersController.postUser);
+router.get('/activation/:token', usersController.activateUser);
 
 module.exports = router;

@@ -6,7 +6,6 @@ var models = require('./models/');
 const config = require('./config/config');
 const usersRoutes = require('./routes/users');
 
-
 const whitelist = ['http://localhost:8080','https://unruffled-benz-398ce5.netlify.com'];
 const corsOptions = {
     origin: function (origin, callback) {

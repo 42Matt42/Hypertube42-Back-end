@@ -5,6 +5,7 @@ const async = require('async');
 const jwt = require('jsonwebtoken');
 // const bcrypt = require('bcryptjs');
 const config = require('../config/config');
+const models = require('../models');
 
 const token = () => {
     return jwt.sign({id: 1, username: 123}, config.jwt, {
@@ -118,21 +119,39 @@ test('Get invalid user', function (t) {
 
 });
 
-
 test('Login valid', function (t) {
-    request(app)
-        .post('/users/login')
-        .send({
-            username: '123',
-            password: '123123',
+    models.user.update({
+            disabled: 0,
+            token: null,
+        }, {
+            where: {
+                id: 1
+            }
+        }
+    )
+        .then(result => {
+            request(app)
+                .post('/users/login')
+                .send({
+                    username: '123',
+                    password: '123123',
+                })
+                .expect('Content-Type', /json/)
+                .expect(200)
+                .end(function (err, res) {
+                    t.error(err, 'No error');
+                    t.end();
+                });
         })
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .end(function (err, res) {
-            t.error(err, 'No error');
-            t.end();
-        });
+        .catch(error => {
+            console.log(error);
+        })
+
+
 });
+
+
+
 
 test('Login invalid', function (t) {
     request(app)
@@ -151,6 +170,7 @@ test('Login invalid', function (t) {
 test('Put valid', function (t) {
     request(app)
         .post('/users/login')
+        .set({"x-access-token": token()})
         .send({
             username: '123',
             password: '123123',
