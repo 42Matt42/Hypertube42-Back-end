@@ -126,19 +126,19 @@ exports.postUser = ((req, res, next) => {
     })
         .then(user => {
             if (user) {
-                // emailHelper.send(email, username, user.token, emailHelper.templates.ACTIVATE).then(
-                //     function (result) {
-                //         if (result) {
+                emailHelper.send(email, username, user.token, emailHelper.templates.ACTIVATE).then(
+                    function (result) {
+                        if (result) {
                             return res.status(200).json({
                                 status: "Success",
                             });
-                    //     }
-                    //     return res.status(500).json({error: 'Failed to send email.'})
-                    // },
-                    // function (error) {
-                    //     console.log(error)
-                    //     return res.status(500).json({error: 'Failed to send email.'})
-                    // })
+                        }
+                        return res.status(500).json({error: 'Failed to send email.'})
+                    },
+                    function (error) {
+                        console.log(error)
+                        return res.status(500).json({error: 'Failed to send email.'})
+                    })
             }
         })
         .catch(error => {
