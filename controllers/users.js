@@ -6,7 +6,7 @@ const config = require('../config/config');
 const auth = require('../helpers/auth')
 const emailHelper = require('../helpers/email')
 const moment = require('moment')
-const {Sequelize, DataTypes} = require('sequelize');
+const {Sequelize} = require('sequelize');
 const {v4: uuidv4} = require('uuid');
 
 exports.login = ((req, res) => {
@@ -92,7 +92,7 @@ exports.putUser = ((req, res, next) => {
     let username = req.params.username;
     //TODO handle email update
     let {firstName, lastName, email, password} = req.body;
-    if (username != req.username) {
+    if (username !== req.username) {
         console.log(username, req.username);
         return res.status(403).send({error: 'Unauthorized'});
     }
@@ -126,19 +126,19 @@ exports.postUser = ((req, res, next) => {
     })
         .then(user => {
             if (user) {
-                emailHelper.send(email, username, user.token, emailHelper.templates.ACTIVATE).then(
-                    function (result) {
-                        if (result) {
+                // emailHelper.send(email, username, user.token, emailHelper.templates.ACTIVATE).then(
+                //     function (result) {
+                //         if (result) {
                             return res.status(200).json({
                                 status: "Success",
                             });
-                        }
-                        return res.status(500).json({error: 'Failed to send email.'})
-                    },
-                    function (error) {
-                        console.log(error)
-                        return res.status(500).json({error: 'Failed to send email.'})
-                    })
+                    //     }
+                    //     return res.status(500).json({error: 'Failed to send email.'})
+                    // },
+                    // function (error) {
+                    //     console.log(error)
+                    //     return res.status(500).json({error: 'Failed to send email.'})
+                    // })
             }
         })
         .catch(error => {
@@ -175,7 +175,15 @@ exports.activateUser = ((req, res) => {
         })
 });
 
-exports.reactivateUser = ((req, res) => {
+exports.reactivateUser = ((req, res, next) => {
+    sendEmail(req, res, next, emailHelper.templates.ACTIVATE);
+});
+
+exports.sendResetPassword = ((req, res, next) => {
+    sendEmail(req, res, next, emailHelper.templates.RESET);
+});
+
+sendEmail = ((req, res, next, template) => {
     let email = req.body.email;
     let token = uuidv4();
     let token_creation = moment().toISOString();
@@ -190,8 +198,10 @@ exports.reactivateUser = ((req, res) => {
             if (!user) {
                 return res.status(400).json({error: "Email doesn't exist"});
             }
-            if (!user.disabled) {
+            if (template === emailHelper.templates.ACTIVATE && !user.disabled){
                 return res.status(409).json({error: "Account already enabled"});
+            } else if (template === emailHelper.templates.RESET && user.disabled){
+                return res.status(409).json({error: "Account is disabled"});
             }
             models.user.update({
                 token,
@@ -202,7 +212,7 @@ exports.reactivateUser = ((req, res) => {
                     if (affectedCount !== 1) {
                         return res.status(400).json({error: "Database error"});
                     }
-                    emailHelper.send(email, user.username, token, emailHelper.templates.ACTIVATE).then(
+                    emailHelper.send(email, user.username, token, template).then(
                         function (result) {
                             if (result) {
                                 return res.status(200).json({
