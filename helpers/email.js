@@ -23,7 +23,7 @@ const templates = {
 sgMail.setApiKey(config.sg);
 const msg = {
     to: null,
-    from: 'admin@ht42.fr',
+    from: config.email,
     subject: null,
     html: null,
 };

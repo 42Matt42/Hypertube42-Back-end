@@ -10,6 +10,7 @@ const db = process.env.DB;
 const jwt = process.env.JWT;
 const sg = process.env.SG;
 const server = process.env.SERVER;
+const email = process.env.EMAIL;
 module.exports = {
     port,
     host,
@@ -20,4 +21,5 @@ module.exports = {
     jwt,
     sg,
     server,
+    email
 }
