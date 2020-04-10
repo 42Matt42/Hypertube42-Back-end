@@ -20,7 +20,7 @@ test('Post valid user', function (t) {
                     .send({
                         username: '123',
                         password: '123123',
-                        email: '123@gmail.com',
+                        email: '123@gl.com',
                         firstName: 'first',
                         lastName: 'last'
                     })
@@ -59,7 +59,7 @@ test('Post invalid user', function (t) {
                     .send({
                         username: '123',
                         password: '123123',
-                        email: '123@gmail.com',
+                        email: '123@gl.com',
                         firstName: 'first',
                     })
                     .expect('Content-Type', /json/)
@@ -69,20 +69,20 @@ test('Post invalid user', function (t) {
                 cb(null, results);
             },
             (results, cb) =>
-                request(app).post('/users/user?email=123@gmail.com&username=123&firstName=first&lastName=last&password=123123')
+                request(app).post('/users/user?email=123@gl.com&username=123&firstName=first&lastName=last&password=123123')
                     .send({
                         username: '123',
                         password: '123123',
-                        email: '123@gmail.com',
+                        email: '123@gl.com',
                         firstName: 'first',
                         lastName: 'last'
                     })
                     .expect('Content-Type', /json/)
                     .expect(405, cb),
-        (results, cb) => {
-            t.same(results.body.error[0], "email must be unique");
-            cb(null, results);
-        },
+            (results, cb) => {
+                t.same(results.body.error[0], "email must be unique");
+                cb(null, results);
+            },
         ],
         (err, results) => {
             t.end();
@@ -100,7 +100,7 @@ test('Get valid user', function (t) {
         .end(function (err, res) {
             t.error(err, 'No error');
             t.same(res.body.user.username, "123", "username is valid");
-            t.same(res.body.user.email, "123@gmail.com", 'User email as expected');
+            t.same(res.body.user.email, "123@gl.com", 'User email as expected');
             t.same(res.body.user.firstName, "first", 'Firstname as expected');
             t.same(res.body.user.lastName, "last", 'Lastname as expected');
             t.end();
@@ -113,44 +113,75 @@ test('Get invalid user', function (t) {
         .set({"x-access-token": token()})
         .expect('Content-Type', /json/)
         .expect(404)
-        .end(function(err, res) {
+        .end(function (err, res) {
             t.end(err);
         });
 
 });
 
-test('Login valid', function (t) {
-    models.user.update({
-            disabled: 0,
-            token: null,
-        }, {
-            where: {
-                id: 1
-            }
-        }
-    )
-        .then(result => {
-            request(app)
-                .post('/users/login')
-                .send({
-                    username: '123',
-                    password: '123123',
+
+test('Activation / login / reset chain valid user', function (t) {
+    async.waterfall([
+            (cb) =>
+                models.user.findOne({
+                    where: {
+                        username: 123
+                    }
                 })
-                .expect('Content-Type', /json/)
-                .expect(200)
-                .end(function (err, res) {
-                    t.error(err, 'No error');
-                    t.end();
-                });
-        })
-        .catch(error => {
-            console.log(error);
-        })
+                    .then(user => {
+                        request(app)
+                            .get('/users/activation/' + user.token)
+                            .send()
+                            .expect('Content-Type', /json/)
+                            .expect(200, cb)
+                    }),
+            (results, cb) => {
+                t.same(results.body.status, "Success", "Status: Success");
+                cb(null, results);
+            },
+            (results, cb) =>
+                request(app)
+                    .post('/users/login')
+                    .send({
+                        username: '123',
+                        password: '123123',
+                    })
+                    .expect('Content-Type', /json/)
+                    .expect(200, cb),
 
+            (results, cb) => {
+                t.same(results.body.status, "Success", "Status: Success");
+                cb(null, results);
+            },
+            (results, cb) =>
+                request(app)
+                    .post('/users/reset')
+                    .send({
+                        email: '123@gl.com',
+                    })
+                    .expect('Content-Type', /json/)
+                    .expect(200, cb),
 
+            (results, cb) => {
+                t.same(results.body.status, "Success", "Status: Success");
+                cb(null, results);
+            },
+            // (results, cb) =>
+            //     models.user.findOne({
+            //         where: {
+            //             username: 123,
+            //         }
+            //     })
+            //         .then(user =>{
+            //             console.log("here")
+            //             t.same(user.token, !null, "Token updated successfully");
+            //         })
+        ],
+        (err, results) => {
+            t.end();
+        }
+    );
 });
-
-
 
 
 test('Login invalid', function (t) {
@@ -162,7 +193,7 @@ test('Login invalid', function (t) {
         })
         .expect('Content-Type', /json/)
         .expect(403)
-        .end(function(err, res) {
+        .end(function (err, res) {
             t.end(err);
         });
 });

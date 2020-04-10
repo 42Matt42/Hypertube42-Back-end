@@ -101,7 +101,13 @@ exports.putUser = ((req, res, next) => {
     }
     models.user.update({
         firstName, lastName, email, username, password
-    }, {where: {username}})
+    }, {
+        where:
+            {
+                username,
+                disabled: 0
+            }
+    })
         .then(() => {
             return res.status(200).json({
                 status: "Success",
@@ -129,16 +135,16 @@ exports.postUser = ((req, res, next) => {
                 emailHelper.send(email, username, user.token, emailHelper.templates.ACTIVATE).then(
                     function (result) {
                         if (result) {
-                            return res.status(200).json({
-                                status: "Success",
-                            });
-                        }
-                        return res.status(500).json({error: 'Failed to send email.'})
-                    },
-                    function (error) {
-                        console.log(error)
-                        return res.status(500).json({error: 'Failed to send email.'})
-                    })
+                return res.status(200).json({
+                    status: "Success",
+                });
+                    }
+                    return res.status(500).json({error: 'Failed to send email.'})
+                },
+                function (error) {
+                    console.log(error)
+                    return res.status(500).json({error: 'Failed to send email.'})
+                })
             }
         })
         .catch(error => {
@@ -151,9 +157,8 @@ exports.postUser = ((req, res, next) => {
 });
 
 
-//todo check if not disabled?
 exports.activateUser = ((req, res) => {
-    let token = req.params.param;
+    let token = req.params.token;
     models.user.update({
         disabled: 0,
         token: null,
@@ -198,9 +203,9 @@ sendEmail = ((req, res, next, template) => {
             if (!user) {
                 return res.status(400).json({error: "Email doesn't exist"});
             }
-            if (template === emailHelper.templates.ACTIVATE && !user.disabled){
+            if (template === emailHelper.templates.ACTIVATE && !user.disabled) {
                 return res.status(409).json({error: "Account already enabled"});
-            } else if (template === emailHelper.templates.RESET && user.disabled){
+            } else if (template === emailHelper.templates.RESET && user.disabled) {
                 return res.status(409).json({error: "Account is disabled"});
             }
             models.user.update({
