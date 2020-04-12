@@ -109,5 +109,9 @@ module.exports = (dbc, DataTypes) => {
         },
     );
 
+    User.associate = function(models) {
+        models.user.hasMany(models.tempEmail);
+    };
+
     return User;
 }

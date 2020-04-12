@@ -17,6 +17,14 @@ const templates = {
             'To reset your password, please click on this link: ',
         html2: '<br><br>Kind regards,<br>HT42 Team',
         link: '/users/activation/'
+    },
+    CHANGEEMAIL: {
+        subject:'Change email',
+        html0: 'Hello ',
+        html1: ',<br><br>You have requested to change your email at HT42. If you haven\'t done that, please ignore this email.' +
+            'To confirm your new address, please click on this link: ',
+        html2: '<br><br>Kind regards,<br>HT42 Team',
+        link: '/users/email/'
     }
 }
 
