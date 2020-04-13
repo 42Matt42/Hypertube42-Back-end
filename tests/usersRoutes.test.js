@@ -7,10 +7,15 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const models = require('../models');
 
+let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
 const token = () => {
-    return jwt.sign({id: 1, username: 123}, config.jwt, {
-        expiresIn: 86400 // expires in 24 hours
-    });
+    return jwt.sign({
+        exp: exp,
+        data: {
+            id: 1,
+            username: 123
+        }
+    }, config.jwt, );
 }
 
 test('Post valid user', function (t) {
@@ -136,10 +141,10 @@ test('Activation / login / reset chain valid user', function (t) {
                             .expect(200, cb)
                     }),
             (results, cb) => {
-                t.same(results.body.status, "Success", "Status: Success");
+                t.same(results.body.status, "Success", "Status: Success 1");
                 cb(null, results);
             },
-            (results, cb) =>
+            (results, cb) => {
                 request(app)
                     .post('/users/login')
                     .send({
@@ -147,35 +152,95 @@ test('Activation / login / reset chain valid user', function (t) {
                         password: '123123',
                     })
                     .expect('Content-Type', /json/)
-                    .expect(200, cb),
-
+                    .expect(200, cb)
+            },
             (results, cb) => {
-                t.same(results.body.status, "Success", "Status: Success");
+                t.same(results.body.status, "Success", "Status: Success 2");
                 cb(null, results);
             },
-            (results, cb) =>
+            (results, cb) => {
                 request(app)
-                    .post('/users/reset')
+                    .post('/users/user/reset')
                     .send({
                         email: '123@gl.com',
                     })
                     .expect('Content-Type', /json/)
-                    .expect(200, cb),
-
+                    .expect(200, cb)
+            },
             (results, cb) => {
-                t.same(results.body.status, "Success", "Status: Success");
+                t.same(results.body.status, "Success", "Status: Success 3");
                 cb(null, results);
             },
-            // (results, cb) =>
-            //     models.user.findOne({
-            //         where: {
-            //             username: 123,
-            //         }
-            //     })
-            //         .then(user =>{
-            //             console.log("here")
-            //             t.same(user.token, !null, "Token updated successfully");
-            //         })
+            (results, cb) => {
+                models.user.findOne({
+                    where: {
+                        username: 123,
+                    }
+                })
+                    .then(user => {
+                        t.notEqual(user.token, null, "Token updated successfully");
+                        cb(null, results);
+                    })
+            },
+            (results, cb) => {
+        console.log(token())
+                request(app)
+                    .put('/users/user/123/email')
+                    .set({"x-access-token": token()})
+                    .send({
+                        email: '123@gol.com',
+                    })
+                    .expect('Content-Type', /json/)
+                    .expect(200, cb)
+            },
+            (results, cb) => {
+                t.same(results.body.status, "Success", "Status: Success 4");
+                cb(null, results);
+            },
+            (results, cb) => {
+                models.tempEmail.findOne({
+                    where: {
+                        userId: 1,
+                    }
+                })
+                    .then(tempEmail => {
+                        t.notEqual(tempEmail.token, null, "Token created successfully");
+                        cb(null, tempEmail.token);
+                    })
+            },
+            (results, cb) => {
+                request(app)
+                    .get('/users/email/' + results)
+                    .send()
+                    .expect('Content-Type', /json/)
+                    .expect(200, cb)
+            },
+            (results, cb) => {
+                t.same(results.body.status, "Success", "Status: Success 5");
+                cb(null, results);
+            },
+            (results, cb) => {
+                models.user.findOne({
+                    where: {
+                        username: 123,
+                    }
+                })
+                    .then(user => {
+                        t.same(user.email, '123@gol.com', "Email updated successfully");
+                        cb(null, results);
+                    })
+            },
+            (results, cb) => {
+                models.tempEmail.findOne({
+                    where: {
+                        userId: 1,
+                    }
+                })
+                    .then(user => {
+                        t.same(user, null, "Temp email deleted successfully");
+                        cb(null, results);
+                    })
+            },
         ],
         (err, results) => {
             t.end();

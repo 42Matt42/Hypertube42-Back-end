@@ -43,12 +43,15 @@ fs
         db[model.name] = model;
     });
 
+
 //run associate if exists
 Object.keys(db).forEach(modelName => {
     if (db[modelName].associate) {
         db[modelName].associate(db);
     }
 });
+
+
 
 db.dbc = dbc;
 db.Sequelize = Sequelize;
