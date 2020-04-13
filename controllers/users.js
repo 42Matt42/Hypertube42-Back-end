@@ -95,8 +95,8 @@ exports.updateEmail = ((req, res, next) => {
     let email = req.body.email;
 
    // check if email already exists
-    if (username !== req.username) {
-        console.log(username, req.username);
+    if (username.toString() !== req.username.toString()) {
+        console.log("not same user", username, req.username);
         return res.status(403).send({error: 'Unauthorized'});
     }
     models.user.findOne({where: {email,}})
@@ -255,7 +255,7 @@ exports.changeEmail = ((req, res) => {
         attributes: {exclude: ['password', 'token']}
     })
         .then(tempEmail => {
-            console.log(tempEmail)
+            // console.log(tempEmail)
             if (!tempEmail) {
                 return res.status(404).json({
                     error: "Token invalid",
