@@ -155,7 +155,7 @@ exports.updateEmail = ((req, res, next) => {
 exports.putUser = ((req, res, next) => {
     //todo send token if username updated?
     let username = req.params.username;
-    let {firstName, lastName, email, password, language} = req.body;
+    let {firstName, lastName, password, language} = req.body;
     if (username !== req.username) {
         console.log(username, req.username);
         return res.status(403).send({error: 'Unauthorized'});
@@ -165,7 +165,7 @@ exports.putUser = ((req, res, next) => {
     }
 
     models.user.update({
-        firstName, lastName, email, username, password
+        firstName, lastName, username, password, language
     }, {
         where: {
                 username,
