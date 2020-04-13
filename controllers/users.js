@@ -95,6 +95,11 @@ exports.updateEmail = ((req, res, next) => {
     let email = req.body.email;
 
    // check if email already exists
+    if (!email) {
+        return res.status(400).json({
+            error: "Email missing",
+        });
+    }
     if (username.toString() !== req.username.toString()) {
         console.log("not same user", username, req.username);
         return res.status(403).send({error: 'Unauthorized'});
