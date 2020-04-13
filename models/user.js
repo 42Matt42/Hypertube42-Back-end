@@ -15,8 +15,8 @@ module.exports = (dbc, DataTypes) => {
                         args: [/^[a-z]+$/i],
                         msg: "First name can contain only letters"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide first name")
                         }
                     }
@@ -30,8 +30,8 @@ module.exports = (dbc, DataTypes) => {
                         args: [/^[a-z]+$/i],
                         msg: "Last name can contain only letters"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide last name")
                         }
                     }
@@ -43,11 +43,11 @@ module.exports = (dbc, DataTypes) => {
                 allowNull: true,
                 validate: {
                     isEmail: {
-                      args: true,
-                      msg: "Please provide a valid email"
+                        args: true,
+                        msg: "Please provide a valid email"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide email")
                         }
                     }
@@ -76,8 +76,8 @@ module.exports = (dbc, DataTypes) => {
                         args: [6, 60],
                         msg: "Password should contain between 6 and 60 characters"
                     },
-                    isNull: function (val){
-                        if (!val){
+                    isNull: function (val) {
+                        if (!val) {
                             throw new Error("Please provide password")
                         }
                     }
@@ -93,24 +93,25 @@ module.exports = (dbc, DataTypes) => {
                 allowNull: false,
                 defaultValue: 'english',
             },
-
+            disabled: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: true,
+            },
+            token: {
+                type: DataTypes.UUID,
+                defaultValue: DataTypes.UUIDV4,
+            },
+        token_creation: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
         },
     );
 
-// create user
-//         User.create({
-//             firstName: 'John',
-//             lastName: 'Doe',
-//             email: 'johndoe@gmail.com',
-//             username: 'johndoe',
-//             password: '1234567',
-//         })
-//             .then(function () {
-//                 console.log("user created");
-//             })
-//             .catch(function (err) {
-//                 console.log(err);
-//             });
+    User.associate = function(models) {
+        models.user.hasMany(models.tempEmail);
+    };
 
     return User;
 }
