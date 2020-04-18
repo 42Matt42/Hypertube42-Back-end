@@ -12,6 +12,7 @@ router.route('/user/:username')
 
 
 router.post('/user', usersController.postUser);
+router.post('/user/oauth', usersController.oauthUser);
 
 router.put('/activation', usersController.reactivateUser); //send email to activate account again
 router.get('/activation/:token', usersController.activateUser); //validate password reset / activation token

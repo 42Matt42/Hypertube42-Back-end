@@ -9,6 +9,8 @@ const moment = require('moment')
 const {Sequelize, sequelize} = require('sequelize');
 const {v4: uuidv4} = require('uuid');
 const db = require('../models/index')
+const https = require('https');
+
 
 exports.login = ((req, res) => {
     let username = req.body.username;
@@ -359,4 +361,51 @@ sendEmail = ((req, res, next, template) => {
                 error: "Database error",
             });
         })
+});
+
+exports.postUser = ((req, res, next) => {
+    let token = req.body;
+
+    const options = {
+        hostname: 'https://api.intra.42.fr',
+        port: 443,
+        path: '/oauth/token',
+        method: 'POST',
+        body: {
+            grant_type: 'authorization_code',
+            client_id: config.client42,
+            client_secret: config.secret42,
+            code: token,
+        }
+    };
+
+    const request = https.request(options, (res) =>{
+
+        console.log('statusCode:', res.statusCode);
+        console.log('headers:', res.headers);
+
+        // res.on('data', (d) => {
+        //     process.stdout.write(d);
+        // });
+        const body = [];
+        request.on("data", (chunk) => {
+            console.log(chunk);
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            const parsedBody = Buffer.concat(body).toString();
+            const message = parsedBody.split('=')[1];
+            console.log(parsedBody);
+            console.log(message);
+        });
+        console.log(body);
+        return res.status(200).json({
+            body,
+        });
+    });
+    request.on('error', (e) => {
+        console.error(e);
+    });
+    request.end();
+
 });
