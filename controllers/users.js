@@ -8,10 +8,7 @@ const emailHelper = require('../helpers/email')
 const moment = require('moment')
 const {Sequelize, sequelize} = require('sequelize');
 const {v4: uuidv4} = require('uuid');
-const db = require('../models/index')
-const https = require('https');
-
-
+const db = require('../models/index');
 const axios = require('axios');
 
 
@@ -379,9 +376,27 @@ exports.oauthUser42 = ((req, res, next) => {
     })
         .then(response => {
             console.log(response.data.access_token);
-            return res.status(200).json({
-                status: "Success",
-                token: response.data.access_token
+
+
+            let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+            jwt.sign({
+                exp: exp,
+                data: {
+                    id: 999,
+                    username: 'testuser',
+                    token: response.data.access_token,
+                }
+            }, config.jwt, (err, jwt_token) => {
+                if (err) {
+                    return res.status(500).json({error: "Failed to create token."});
+                }
+                return res.status(200).json({
+                    status: "Success",
+                    token: {
+                        exp,
+                        code: jwt_token,
+                    },
+                });
             });
         })
         .catch(error => {
@@ -417,9 +432,25 @@ exports.oauthUserGitHub = ((req, res, next) => {
                     error_description: result.error_description,
                 });
             } else {
-                return res.status(200).json({
-                    status: "Success",
-                    token: result.access_token
+                let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+                jwt.sign({
+                    exp: exp,
+                    data: {
+                        id: 999,
+                        username: 'testuser',
+                        token: result.access_token,
+                    }
+                }, config.jwt, (err, jwt_token) => {
+                    if (err) {
+                        return res.status(500).json({error: "Failed to create token."});
+                    }
+                    return res.status(200).json({
+                        status: "Success",
+                        token: {
+                            exp,
+                            code: jwt_token,
+                        },
+                    });
                 });
             }
         })
@@ -444,10 +475,27 @@ exports.oauthUserFacebook = ((req, res, next) => {
     })
         .then(response => {
             console.log(response.data.access_token)
+
+            let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+            jwt.sign({
+                exp: exp,
+                data: {
+                    id: 999,
+                    username: 'testuser',
+                    token: response.data.access_token,
+                }
+            }, config.jwt, (err, jwt_token) => {
+                if (err) {
+                    return res.status(500).json({error: "Failed to create token."});
+                }
                 return res.status(200).json({
                     status: "Success",
-                    token: response.data.access_token
+                    token: {
+                        exp,
+                        code: jwt_token,
+                    },
                 });
+            });
 
         })
         .catch(error => {
