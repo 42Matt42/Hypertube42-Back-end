@@ -8,7 +8,9 @@ const emailHelper = require('../helpers/email')
 const moment = require('moment')
 const {Sequelize, sequelize} = require('sequelize');
 const {v4: uuidv4} = require('uuid');
-const db = require('../models/index')
+const db = require('../models/index');
+const axios = require('axios');
+
 
 exports.login = ((req, res) => {
     let username = req.body.username;
@@ -94,7 +96,7 @@ exports.updateEmail = ((req, res, next) => {
     let username = req.params.username;
     let email = req.body.email;
 
-   // check if email already exists
+    // check if email already exists
     if (!email) {
         return res.status(400).json({
             error: "Email missing",
@@ -173,9 +175,9 @@ exports.putUser = ((req, res, next) => {
         firstName, lastName, username, password, language
     }, {
         where: {
-                username,
-                disabled: 0
-            }
+            username,
+            disabled: 0
+        }
     })
         .then(() => {
             return res.status(200).json({
@@ -359,4 +361,149 @@ sendEmail = ((req, res, next, template) => {
                 error: "Database error",
             });
         })
+});
+
+exports.oauthUser42 = ((req, res, next) => {
+    let token = req.body.token;
+
+    console.log(token, config.client42, config.secret42);
+    axios.post('https://api.intra.42.fr/oauth/token', {
+        grant_type: 'authorization_code',
+        client_id: config.client42,
+        client_secret: config.secret42,
+        code: token,
+        redirect_uri: config.redirect42,
+    })
+        .then(response => {
+            console.log(response.data.access_token);
+
+
+            let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+            jwt.sign({
+                exp: exp,
+                data: {
+                    id: 999,
+                    username: 'testuser',
+                    token: response.data.access_token,
+                }
+            }, config.jwt, (err, jwt_token) => {
+                if (err) {
+                    return res.status(500).json({error: "Failed to create token."});
+                }
+                return res.status(200).json({
+                    status: "Success",
+                    token: {
+                        exp,
+                        code: jwt_token,
+                    },
+                });
+            });
+        })
+        .catch(error => {
+            console.log(error);
+            return res.status(400).json({
+                error: "Request error",
+            });
+        });
+
+});
+
+exports.oauthUserGitHub = ((req, res, next) => {
+    let token = req.body.token;
+
+    console.log(token, config.client42, config.secret42);
+    axios.post('https://github.com/login/oauth/access_token', {
+        client_id: config.clientGH,
+        client_secret: config.secretGH,
+        code: token,
+        // redirect_uri: config.redirectGH,
+    })
+        .then(response => {
+            let search = response.data
+
+            let result = JSON.parse('{"' + search.replace(/&/g, '","').replace(/=/g,'":"') + '"}', function(key, value) { return key===""?value:decodeURIComponent(value) })
+            console.log(result);
+
+            if ('error' in result) {
+                console.log(result.error)
+
+                return res.status(400).json({
+                    error: result.error,
+                    error_description: result.error_description,
+                });
+            } else {
+                let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+                jwt.sign({
+                    exp: exp,
+                    data: {
+                        id: 999,
+                        username: 'testuser',
+                        token: result.access_token,
+                    }
+                }, config.jwt, (err, jwt_token) => {
+                    if (err) {
+                        return res.status(500).json({error: "Failed to create token."});
+                    }
+                    return res.status(200).json({
+                        status: "Success",
+                        token: {
+                            exp,
+                            code: jwt_token,
+                        },
+                    });
+                });
+            }
+        })
+        .catch(error => {
+            console.log(error);
+            return res.status(400).json({
+                error: "Request error",
+            });
+        });
+
+});
+
+
+exports.oauthUserFacebook = ((req, res, next) => {
+    let token = req.body.token;
+
+    axios.post('https://graph.facebook.com/v6.0/oauth/access_token', {
+        client_id: config.clientFB,
+        client_secret: config.secretFB,
+        code: token,
+        redirect_uri: config.redirectFB,
+    })
+        .then(response => {
+            console.log(response.data.access_token)
+
+            let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+            jwt.sign({
+                exp: exp,
+                data: {
+                    id: 999,
+                    username: 'testuser',
+                    token: response.data.access_token,
+                }
+            }, config.jwt, (err, jwt_token) => {
+                if (err) {
+                    return res.status(500).json({error: "Failed to create token."});
+                }
+                return res.status(200).json({
+                    status: "Success",
+                    token: {
+                        exp,
+                        code: jwt_token,
+                    },
+                });
+            });
+
+        })
+        .catch(error => {
+            console.log(error);
+            console.log("ERROR")
+            return res.status(400).json({
+                error: "Request error",
+            });
+        });
+
 });
