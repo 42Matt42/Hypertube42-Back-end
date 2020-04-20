@@ -366,7 +366,7 @@ sendEmail = ((req, res, next, template) => {
         })
 });
 
-exports.oauthUser = ((req, res, next) => {
+exports.oauthUser42 = ((req, res, next) => {
     let token = req.body.token;
 
     console.log(token, config.client42, config.secret42);
@@ -383,6 +383,45 @@ exports.oauthUser = ((req, res, next) => {
                 status: "Success",
                 token: response.data.access_token
             });
+        })
+        .catch(error => {
+            console.log(error);
+            return res.status(400).json({
+                error: "Request error",
+            });
+        });
+
+});
+
+exports.oauthUserGitHub = ((req, res, next) => {
+    let token = req.body.token;
+
+    console.log(token, config.client42, config.secret42);
+    axios.post('https://github.com/login/oauth/access_token', {
+        client_id: config.clientGH,
+        client_secret: config.secretGH,
+        code: token,
+        // redirect_uri: config.redirectGH,
+    })
+        .then(response => {
+            let search = response.data
+
+            let result = JSON.parse('{"' + search.replace(/&/g, '","').replace(/=/g,'":"') + '"}', function(key, value) { return key===""?value:decodeURIComponent(value) })
+            console.log(result);
+
+            if ('error' in result) {
+                console.log(result.error)
+
+                return res.status(400).json({
+                    error: result.error,
+                    error_description: result.error_description,
+                });
+            } else {
+                return res.status(200).json({
+                    status: "Success",
+                    token: result.access_token
+                });
+            }
         })
         .catch(error => {
             console.log(error);
