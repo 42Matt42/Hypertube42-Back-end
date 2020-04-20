@@ -17,6 +17,9 @@ const clientGH = process.env.CLIENTGH;
 const secretGH = process.env.SECRETGH;
 const redirect42 = process.env.REDIRECT42;
 const redirectGH = process.env.REDIRECTGH;
+const clientFB = process.env.CLIENTFB;
+const secretFB = process.env.SECRETFB;
+const redirectFB = process.env.REDIRECTFB;
 module.exports = {
     port,
     host,
@@ -34,4 +37,7 @@ module.exports = {
     clientGH,
     secretGH,
     redirectGH,
+    secretFB,
+    redirectFB,
+    clientFB,
 };

@@ -431,3 +431,31 @@ exports.oauthUserGitHub = ((req, res, next) => {
         });
 
 });
+
+
+exports.oauthUserFacebook = ((req, res, next) => {
+    let token = req.body.token;
+
+    axios.post('https://graph.facebook.com/v6.0/oauth/access_token', {
+        client_id: config.clientFB,
+        client_secret: config.secretFB,
+        code: token,
+        redirect_uri: config.redirectFB,
+    })
+        .then(response => {
+            console.log(response.data.access_token)
+                return res.status(200).json({
+                    status: "Success",
+                    token: response.data.access_token
+                });
+
+        })
+        .catch(error => {
+            console.log(error);
+            console.log("ERROR")
+            return res.status(400).json({
+                error: "Request error",
+            });
+        });
+
+});
