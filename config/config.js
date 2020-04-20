@@ -15,6 +15,7 @@ const client42 = process.env.CLIENT42;
 const secret42 = process.env.SECRET42;
 const clientGH = process.env.CLIENTGH;
 const secretGH = process.env.SECRETGH;
+const redirect42 = process.env.REDIRECT42;
 module.exports = {
     port,
     host,
@@ -28,6 +29,7 @@ module.exports = {
     email,
     client42,
     secret42,
+    redirect42,
     clientGH,
     secretGH,
 }

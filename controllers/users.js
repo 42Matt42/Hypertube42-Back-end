@@ -12,6 +12,9 @@ const db = require('../models/index')
 const https = require('https');
 
 
+const axios = require('axios');
+
+
 exports.login = ((req, res) => {
     let username = req.body.username;
     let password = req.body.password;
@@ -96,7 +99,7 @@ exports.updateEmail = ((req, res, next) => {
     let username = req.params.username;
     let email = req.body.email;
 
-   // check if email already exists
+    // check if email already exists
     if (!email) {
         return res.status(400).json({
             error: "Email missing",
@@ -175,9 +178,9 @@ exports.putUser = ((req, res, next) => {
         firstName, lastName, username, password, language
     }, {
         where: {
-                username,
-                disabled: 0
-            }
+            username,
+            disabled: 0
+        }
     })
         .then(() => {
             return res.status(200).json({
@@ -363,49 +366,29 @@ sendEmail = ((req, res, next, template) => {
         })
 });
 
-exports.postUser = ((req, res, next) => {
-    let token = req.body;
+exports.oauthUser = ((req, res, next) => {
+    let token = req.body.token;
 
-    const options = {
-        hostname: 'https://api.intra.42.fr',
-        port: 443,
-        path: '/oauth/token',
-        method: 'POST',
-        body: {
-            grant_type: 'authorization_code',
-            client_id: config.client42,
-            client_secret: config.secret42,
-            code: token,
-        }
-    };
-
-    const request = https.request(options, (res) =>{
-
-        console.log('statusCode:', res.statusCode);
-        console.log('headers:', res.headers);
-
-        // res.on('data', (d) => {
-        //     process.stdout.write(d);
-        // });
-        const body = [];
-        request.on("data", (chunk) => {
-            console.log(chunk);
-            body.push(chunk);
+    console.log(token, config.client42, config.secret42);
+    axios.post('https://api.intra.42.fr/oauth/token', {
+        grant_type: 'authorization_code',
+        client_id: config.client42,
+        client_secret: config.secret42,
+        code: token,
+        redirect_uri: config.redirect42,
+    })
+        .then(response => {
+            console.log(response.data.access_token);
+            return res.status(200).json({
+                status: "Success",
+                token: response.data.access_token
+            });
+        })
+        .catch(error => {
+            console.log(error);
+            return res.status(400).json({
+                error: "Request error",
+            });
         });
-        request.on("end", () => {
-            const parsedBody = Buffer.concat(body).toString();
-            const message = parsedBody.split('=')[1];
-            console.log(parsedBody);
-            console.log(message);
-        });
-        console.log(body);
-        return res.status(200).json({
-            body,
-        });
-    });
-    request.on('error', (e) => {
-        console.error(e);
-    });
-    request.end();
 
 });
