@@ -6,10 +6,8 @@ const config = require('../config/config')
 const auth = require('../helpers/auth')
 const emailHelper = require('../helpers/email')
 const moment = require('moment')
-const { Sequelize, sequelize } = require('sequelize')
+const { Sequelize } = require('sequelize')
 const { v4: uuidv4 } = require('uuid')
-const db = require('../models/index')
-const axios = require('axios')
 
 exports.login = (req, res) => {
     let username = req.body.username
@@ -152,19 +150,15 @@ exports.updateEmail = (req, res, next) => {
                                             message: 'Email sent',
                                         })
                                     }
-                                    return res
-                                        .status(500)
-                                        .json({
-                                            error: 'Failed to send email.',
-                                        })
+                                    return res.status(500).json({
+                                        error: 'Failed to send email.',
+                                    })
                                 },
                                 function (error) {
                                     console.log(error)
-                                    return res
-                                        .status(500)
-                                        .json({
-                                            error: 'Failed to send email.',
-                                        })
+                                    return res.status(500).json({
+                                        error: 'Failed to send email.',
+                                    })
                                 }
                             )
                     })

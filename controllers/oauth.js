@@ -1,10 +1,7 @@
 const jwt = require('jsonwebtoken')
 const config = require('../config/config')
-const moment = require('moment')
-const { Sequelize, sequelize } = require('sequelize')
-const { v4: uuidv4 } = require('uuid')
+const axios = require('axios').default
 const db = require('../models/index')
-const axios = require('axios')
 
 exports.redirect42 = async (req, res) => {
     let code = req.query.code
@@ -17,13 +14,28 @@ exports.redirect42 = async (req, res) => {
             redirect_uri: config.redirect42,
         })
         let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
+        axios.defaults.headers.common[
+            'Authorization'
+        ] = `Bearer ${response.data.access_token}`
+        let userData = await axios.get('https://api.intra.42.fr/v2/me')
+        const result = await db.user.findOrCreate({
+            where: {
+                firstName: userData.data.first_name,
+                lastName: userData.data.last_name,
+                email: userData.data.email,
+                username: userData.data.login,
+                photo: userData.data.image_url,
+                password: 'àchangerplustard',
+            },
+        })
         const jwt_token = jwt.sign(
             {
                 exp: exp,
                 data: {
-                    id: 999,
-                    username: 'testuser',
-                    token: response.data.access_token,
+                    id: result[0].dataValues.id,
+                    username: result[0].dataValues.username,
+                    token: result[0].dataValues.access_token,
+                    photo: result[0].dataValues.photo,
                 },
             },
             config.jwt
