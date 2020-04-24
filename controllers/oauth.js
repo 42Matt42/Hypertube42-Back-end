@@ -95,7 +95,7 @@ exports.redirectFacebook = async (req, res) => {
     let code = req.query.code
     try {
         let response = await axios.get(
-            `https://graph.facebook.com/v6.0/oauth/access_token?client_id=1245062255689643&client_secret=aa162bbac8aa37524abe9216c5cdeb85&code=${code}&redirect_uri=http://localhost:5555/oauth/fb`
+            `https://graph.facebook.com/v6.0/oauth/access_token?client_id=1245062255689643&client_secret=aa162bbac8aa37524abe9216c5cdeb85&code=${code}&redirect_uri=${config.server}/oauth/fb`
         )
         let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
         let userData = await axios.get(
