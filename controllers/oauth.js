@@ -42,6 +42,9 @@ exports.redirect42 = async (req, res) => {
         )
         return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.redirect('http://localhost:8080')
+        }
         console.log(error)
         return res.status(error).json({
             error: error,
@@ -86,6 +89,9 @@ exports.redirectGitHub = async (req, res) => {
         )
         return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.redirect('http://localhost:8080')
+        }
         return res.status(500).json({
             error: error,
         })
@@ -141,6 +147,9 @@ exports.redirectFacebook = async (req, res) => {
         return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
         console.log(error)
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.redirect('http://localhost:8080')
+        }
         return res.status(500).json({
             error: error,
         })
