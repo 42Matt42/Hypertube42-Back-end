@@ -42,6 +42,7 @@ exports.redirect42 = async (req, res) => {
         )
         return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
+        console.log(error)
         return res.status(error).json({
             error: error,
         })
