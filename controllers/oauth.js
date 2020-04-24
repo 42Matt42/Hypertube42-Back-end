@@ -101,16 +101,29 @@ exports.redirectFacebook = async (req, res) => {
         let userData = await axios.get(
             `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`
         )
-        const result = await db.user.findOrCreate({
-            where: {
-                firstName: userData.data.name.split(' ')[0],
-                lastName: userData.data.name.split(' ')[1],
-                email: userData.data.email,
-                username: userData.data.name,
-                photo: userData.data.picture.data.url,
-                password: 'àchangerplustard',
-            },
-        })
+        if (userData.data.email) {
+            const result = await db.user.findOrCreate({
+                where: {
+                    firstName: userData.data.name.split(' ')[0],
+                    lastName: userData.data.name.split(' ')[1],
+                    email: userData.data.email,
+                    username: userData.data.name,
+                    photo: userData.data.picture.data.url,
+                    password: 'àchangerplustard',
+                },
+            })
+        } else {
+            const result = await db.user.findOrCreate({
+                where: {
+                    firstName: userData.data.name.split(' ')[0],
+                    lastName: userData.data.name.split(' ')[1],
+                    email: 'spaghetti@code.fr',
+                    username: userData.data.name,
+                    photo: userData.data.picture.data.url,
+                    password: 'àchangerplustard',
+                },
+            })
+        }
         const jwt_token = jwt.sign(
             {
                 exp,
