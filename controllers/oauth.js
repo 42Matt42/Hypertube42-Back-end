@@ -101,7 +101,7 @@ exports.redirectFacebook = async (req, res) => {
         let userData = await axios.get(
             `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`
         )
-        const result = {}
+        let result = {}
         if (userData.data.email) {
             result = await db.user.findOrCreate({
                 where: {
