@@ -118,7 +118,9 @@ exports.redirectFacebook = async (req, res) => {
                     firstName: userData.data.name.split(' ')[0],
                     lastName: userData.data.name.split(' ')[1],
                     email: 'spaghetti@code.fr',
-                    username: userData.data.name,
+                    username:
+                        userData.data.name.split(' ')[0].charAt(0) +
+                        userData.data.name.split(' ')[1],
                     photo: userData.data.picture.data.url,
                     password: 'àchangerplustard',
                 },
