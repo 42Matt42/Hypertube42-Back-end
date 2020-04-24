@@ -40,7 +40,7 @@ exports.redirect42 = async (req, res) => {
             },
             config.jwt
         )
-        return res.redirect(config.server + '?code=' + jwt_token)
+        return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
         return res.status(error).json({
             error: error,
@@ -83,7 +83,7 @@ exports.redirectGitHub = async (req, res) => {
             },
             config.jwt
         )
-        return res.redirect(config.server + '?code=' + jwt_token)
+        return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
         return res.status(500).json({
             error: error,
@@ -121,7 +121,7 @@ exports.redirectFacebook = async (req, res) => {
             },
             config.jwt
         )
-        return res.redirect(config.server + '?code=' + jwt_token)
+        return res.redirect('http://localhost:8080?code=' + jwt_token)
     } catch (error) {
         console.log(error)
         return res.status(500).json({
