@@ -4,6 +4,37 @@ const axios = require('axios').default
 const db = require('../models/index')
 const sequelize = require('sequelize')
 
+async function checkOrCreateUser(email, fullName, username, photo) {
+    try {
+        let result = await db.user.findAll({
+            attributes: [
+                'id',
+                'username',
+                'photo',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+            ],
+            where: {
+                email,
+            },
+        })
+        if (result[0].dataValues.n_id === 0) {
+            result = await db.user.create({
+                firstName: fullName.split(' ')[0],
+                lastName: fullName.split(' ')[1],
+                email,
+                username,
+                photo,
+                password: 'àchangerplustard',
+            })
+        } else {
+            result = result[0]
+        }
+        return result
+    } catch (error) {
+        throw new Error(error)
+    }
+}
+
 exports.redirect42 = async (req, res) => {
     let code = req.query.code
     try {
@@ -19,29 +50,13 @@ exports.redirect42 = async (req, res) => {
             'Authorization'
         ] = `Bearer ${response.data.access_token}`
         let userData = await axios.get('https://api.intra.42.fr/v2/me')
-        let result = await db.user.findAll({
-            attributes: [
-                'id',
-                'username',
-                'photo',
-                [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
-            ],
-            where: {
-                email: userData.data.email,
-            },
-        })
-        if (result[0].dataValues.n_id === 0) {
-            result = await db.user.create({
-                firstName: userData.data.first_name,
-                lastName: userData.data.last_name,
-                email: userData.data.email,
-                username: userData.data.login,
-                photo: userData.data.image_url,
-                password: 'àchangerplustard',
-            })
-        } else {
-            result = result[0]
-        }
+        let name = userData.data.first_name + ' ' + userData.data.last_name
+        let result = await checkOrCreateUser(
+            userData.data.email,
+            name,
+            userData.data.login,
+            userData.data.image_url
+        )
         const jwt_token = jwt.sign(
             {
                 exp: exp,
@@ -78,29 +93,12 @@ exports.redirectGitHub = async (req, res) => {
         let token = await response.data.split('&')[0].split('=')[1]
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         let userData = await axios.get('https://api.github.com/user')
-        let result = await db.user.findAll({
-            attributes: [
-                'id',
-                'username',
-                'photo',
-                [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
-            ],
-            where: {
-                email: userData.data.email,
-            },
-        })
-        if (result[0].dataValues.n_id === 0) {
-            result = await db.user.create({
-                firstName: userData.data.name.split(' ')[0],
-                lastName: userData.data.name.split(' ')[1],
-                email: userData.data.email,
-                username: userData.data.login,
-                photo: userData.data.avatar_url,
-                password: 'àchangerplustard',
-            })
-        } else {
-            result = result[0]
-        }
+        let result = await checkOrCreateUser(
+            userData.data.email,
+            userData.data.name,
+            userData.data.login,
+            userData.data.avatar_url
+        )
         let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
         const jwt_token = jwt.sign(
             {
@@ -135,29 +133,12 @@ exports.redirectFacebook = async (req, res) => {
         )
         let result = {}
         if (userData.data.email) {
-            result = await db.user.findAll({
-                attributes: [
-                    'id',
-                    'username',
-                    'photo',
-                    [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
-                ],
-                where: {
-                    email: userData.data.email,
-                },
-            })
-            if (result[0].dataValues.n_id === 0) {
-                result = await db.user.create({
-                    firstName: userData.data.name.split(' ')[0],
-                    lastName: userData.data.name.split(' ')[1],
-                    email: userData.data.email,
-                    username: userData.data.login,
-                    photo: userData.data.avatar_url,
-                    password: 'àchangerplustard',
-                })
-            } else {
-                result = result[0]
-            }
+            result = await checkOrCreateUser(
+                userData.data.email,
+                userData.data.name,
+                userData.data.login,
+                userData.data.avatar_url
+            )
         } else {
             return res.status(400).json({
                 message: 'cannot register with facebook',
