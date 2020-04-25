@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const config = require('../config/config')
 const axios = require('axios').default
 const db = require('../models/index')
+const sequelize = require('sequelize')
 
 exports.redirect42 = async (req, res) => {
     let code = req.query.code
@@ -18,24 +19,36 @@ exports.redirect42 = async (req, res) => {
             'Authorization'
         ] = `Bearer ${response.data.access_token}`
         let userData = await axios.get('https://api.intra.42.fr/v2/me')
-        const result = await db.user.findOrCreate({
+        let result = await db.user.findAll({
+            attributes: [
+                'id',
+                'username',
+                'photo',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+            ],
             where: {
+                email: userData.data.email,
+            },
+        })
+        if (result[0].dataValues.n_id === 0) {
+            result = await db.user.create({
                 firstName: userData.data.first_name,
                 lastName: userData.data.last_name,
                 email: userData.data.email,
                 username: userData.data.login,
                 photo: userData.data.image_url,
                 password: 'àchangerplustard',
-            },
-        })
+            })
+        } else {
+            result = result[0]
+        }
         const jwt_token = jwt.sign(
             {
                 exp: exp,
                 data: {
-                    id: result[0].dataValues.id,
-                    username: result[0].dataValues.username,
-                    token: result[0].dataValues.access_token,
-                    photo: result[0].dataValues.photo,
+                    id: result.dataValues.id,
+                    username: result.dataValues.username,
+                    photo: result.dataValues.photo,
                 },
             },
             config.jwt
@@ -65,24 +78,37 @@ exports.redirectGitHub = async (req, res) => {
         let token = await response.data.split('&')[0].split('=')[1]
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         let userData = await axios.get('https://api.github.com/user')
-        const result = await db.user.findOrCreate({
+        let result = await db.user.findAll({
+            attributes: [
+                'id',
+                'username',
+                'photo',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+            ],
             where: {
+                email: userData.data.email,
+            },
+        })
+        if (result[0].dataValues.n_id === 0) {
+            result = await db.user.create({
                 firstName: userData.data.name.split(' ')[0],
                 lastName: userData.data.name.split(' ')[1],
                 email: userData.data.email,
                 username: userData.data.login,
                 photo: userData.data.avatar_url,
                 password: 'àchangerplustard',
-            },
-        })
+            })
+        } else {
+            result = result[0]
+        }
         let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
         const jwt_token = jwt.sign(
             {
                 exp,
                 data: {
-                    username: result[0].dataValues.username,
-                    token: result[0].dataValues.access_token,
-                    photo: result[0].dataValues.photo,
+                    username: result.dataValues.username,
+                    token: result.dataValues.access_token,
+                    photo: result.dataValues.photo,
                 },
             },
             config.jwt
@@ -109,37 +135,41 @@ exports.redirectFacebook = async (req, res) => {
         )
         let result = {}
         if (userData.data.email) {
-            result = await db.user.findOrCreate({
+            result = await db.user.findAll({
+                attributes: [
+                    'id',
+                    'username',
+                    'photo',
+                    [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+                ],
                 where: {
+                    email: userData.data.email,
+                },
+            })
+            if (result[0].dataValues.n_id === 0) {
+                result = await db.user.create({
                     firstName: userData.data.name.split(' ')[0],
                     lastName: userData.data.name.split(' ')[1],
                     email: userData.data.email,
-                    username: userData.data.name,
-                    photo: userData.data.picture.data.url,
+                    username: userData.data.login,
+                    photo: userData.data.avatar_url,
                     password: 'àchangerplustard',
-                },
-            })
+                })
+            } else {
+                result = result[0]
+            }
         } else {
-            result = await db.user.findOrCreate({
-                where: {
-                    firstName: userData.data.name.split(' ')[0],
-                    lastName: userData.data.name.split(' ')[1],
-                    email: 'spaghetti@code.fr',
-                    username:
-                        userData.data.name.split(' ')[0].charAt(0) +
-                        userData.data.name.split(' ')[1],
-                    photo: userData.data.picture.data.url,
-                    password: 'àchangerplustard',
-                },
+            return res.status(400).json({
+                message: 'cannot register with facebook',
             })
         }
         const jwt_token = jwt.sign(
             {
                 exp,
                 data: {
-                    username: result[0].dataValues.username,
-                    token: result[0].dataValues.access_token,
-                    photo: result[0].dataValues.photo,
+                    username: result.dataValues.username,
+                    token: result.dataValues.access_token,
+                    photo: result.dataValues.photo,
                 },
             },
             config.jwt
