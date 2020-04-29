@@ -50,12 +50,8 @@ exports.redirect42 = async (req, res) => {
             'Authorization'
         ] = `Bearer ${response.data.access_token}`
         let userData = await axios.get('https://api.intra.42.fr/v2/me')
-        if (
-            !userData.data.email ||
-            !userData.data.name ||
-            !userData.data.name
-        ) {
-            return res.redirect(400, 'http://localhost:8080/login')
+        if (!userData.data.email || !userData.data.name) {
+            return res.redirect(400, '/login')
         }
         let name = userData.data.first_name + ' ' + userData.data.last_name
         let result = await checkOrCreateUser(
@@ -100,11 +96,7 @@ exports.redirectGitHub = async (req, res) => {
         let token = await response.data.split('&')[0].split('=')[1]
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
         let userData = await axios.get('https://api.github.com/user')
-        if (
-            !userData.data.email ||
-            !userData.data.name ||
-            !userData.data.name
-        ) {
+        if (!userData.data.email || !userData.data.name) {
             return res.redirect(400, '/login')
         }
         let result = await checkOrCreateUser(
