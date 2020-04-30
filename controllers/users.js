@@ -68,7 +68,6 @@ exports.login = (req, res) => {
             })
         })
 }
-
 exports.getUser = (req, res) => {
     let username = req.params.username
     models.user
@@ -96,7 +95,6 @@ exports.getUser = (req, res) => {
             })
         })
 }
-
 exports.updateEmail = (req, res, next) => {
     let username = req.params.username
     let email = req.body.email
@@ -192,7 +190,6 @@ exports.updateAvatar = (req, res, next) => {
             console.log(error)
         })
 }
-
 exports.putUser = (req, res, next) => {
     //todo send token if username updated?
     let username = req.params.username
@@ -234,7 +231,6 @@ exports.putUser = (req, res, next) => {
             })
         })
 }
-
 exports.postUser = (req, res, next) => {
     let { firstName, lastName, email, username, password, photo } = req.body
     if (password && auth.checkPassword(req, res, next, password)) {
@@ -286,7 +282,6 @@ exports.postUser = (req, res, next) => {
             })
         })
 }
-
 exports.activateUser = (req, res) => {
     let token = req.params.token
     models.user
@@ -317,7 +312,6 @@ exports.activateUser = (req, res) => {
             return res.status(400).json({ error: 'Database error' })
         })
 }
-
 exports.changeEmail = (req, res) => {
     let token = req.params.token
 
@@ -370,15 +364,12 @@ exports.changeEmail = (req, res) => {
             })
         })
 }
-
 exports.reactivateUser = (req, res, next) => {
     sendEmail(req, res, next, emailHelper.templates.ACTIVATE)
 }
-
 exports.sendResetPassword = (req, res, next) => {
     sendEmail(req, res, next, emailHelper.templates.RESET)
 }
-
 sendEmail = (req, res, next, template) => {
     let email = req.body.email
     let token = uuidv4()
