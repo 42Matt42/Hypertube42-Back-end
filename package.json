@@ -6,8 +6,16 @@
     "scripts": {
         "test": "tape tests/*.js | tap-spec",
         "start": "nodemon app.js",
-        "lint": "eslint"
+        "lint": "eslint",
+        "postinstall": "link-module-alias"
     },
+    "_moduleAliases": {
+        "@uploads": "./uploads/",
+        "@controllers": "./controllers/",
+        "@models": "./models/",
+        "@helpers": "./helpers/"
+    },
+    "_moduleAliasIgnoreWarning": true,
     "repository": {
         "type": "git",
         "url": "git+https://github.com/42Matt42/Back-end-Hypertube.git"
@@ -29,14 +37,17 @@
         "express": "^4.17.1",
         "jsonwebtoken": "^8.5.1",
         "moment": "^2.24.0",
+        "multer": "^1.4.2",
         "mysql": "^2.18.1",
         "mysql2": "^2.1.0",
         "nodemon": "^2.0.2",
         "sequelize": "^5.21.5",
+        "sharp": "^0.25.2",
         "uuid": "^7.0.3"
     },
     "devDependencies": {
         "eslint": "^6.8.0",
+        "link-module-alias": "^1.2.0",
         "prettier": "^2.0.5",
         "supertest": "^4.0.2",
         "tap-spec": "^5.0.0",

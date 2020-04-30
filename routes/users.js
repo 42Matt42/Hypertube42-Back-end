@@ -2,6 +2,9 @@ const express = require('express')
 const router = express.Router()
 const usersController = require('../controllers/users')
 const auth = require('../helpers/auth')
+const multer = require('multer')
+const storage = require('@helpers/multer')
+const upload = multer(storage)
 
 router.post('/login', usersController.login)
 
@@ -10,6 +13,12 @@ router.put(
     auth.verifyToken,
     usersController.updateEmail
 )
+router.patch(
+    '/user/:username/avatar',
+    upload.single('avatar'),
+    usersController.updateAvatar
+)
+
 router
     .route('/user/:username')
     .get(usersController.getUser)

@@ -3,11 +3,12 @@ const errors = require('../helpers/errors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const config = require('../config/config')
-const auth = require('../helpers/auth')
+const auth = require('@helpers/auth')
 const emailHelper = require('../helpers/email')
 const moment = require('moment')
 const { Sequelize } = require('sequelize')
 const { v4: uuidv4 } = require('uuid')
+const multer = require('multer')
 
 exports.login = (req, res) => {
     let username = req.body.username
@@ -174,6 +175,21 @@ exports.updateEmail = (req, res, next) => {
             return res.status(405).json({
                 error: errorMessages,
             })
+        })
+}
+exports.updateAvatar = (req, res, next) => {
+    let username = req.params.username
+    console.log(req.file)
+    models.user
+        .update(
+            { photo: req.file.path },
+            { returning: true, where: { username: username } }
+        )
+        .then(function (result) {
+            res.status(200).json(result)
+        })
+        .catch((error) => {
+            console.log(error)
         })
 }
 
