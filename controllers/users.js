@@ -178,9 +178,6 @@ exports.updateEmail = (req, res, next) => {
 exports.updateAvatar = (req, res, next) => {
     let username = req.params.username
     console.log(req.file)
-    if (!req.file) {
-        return res.status(400).json({ error: '1 image required' })
-    }
     models.user
         .update(
             { photo: req.file.path },

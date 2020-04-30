@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
-const models = require('./models')
+const models = require('@models')
 
 const config = require('./config/config')
 const usersRoutes = require('./routes/users')
