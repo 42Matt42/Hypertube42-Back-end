@@ -159,21 +159,21 @@ exports.updateEmail = ((req, res, next) => {
 
 exports.putUser = ((req, res, next) => {
     //todo send token if username updated?
-    let username = req.params.username;
-    let {firstName, lastName, password, language} = req.body;
-    if (username !== req.username) {
-        console.log(username, req.username);
+    let currentUsername = req.params.username;
+    let {firstName, lastName, language, username} = req.body;
+    if (currentUsername !== req.username) {
+        console.log(currentUsername, req.username);
         return res.status(403).send({error: 'Unauthorized'});
     }
-    if (password && auth.checkPassword(req, res, next, password)) {
-        password = bcrypt.hashSync(password, 8);
-    }
+    // if (password && auth.checkPassword(req, res, next, password)) {
+    //     password = bcrypt.hashSync(password, 8);
+    // }
 
     models.user.update({
-        firstName, lastName, username, password, language
+        firstName, lastName, username, language
     }, {
         where: {
-                username,
+                username: currentUsername,
                 disabled: 0
             }
     })
