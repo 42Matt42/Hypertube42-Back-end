@@ -10,10 +10,10 @@
         "postinstall": "link-module-alias"
     },
     "_moduleAliases": {
-        "@uploads": "uploads",
-        "@controllers": "controllers",
-        "@models": "models",
-        "@helpers": "helpers"
+        "@uploads": "./uploads",
+        "@controllers": "./controllers",
+        "@models": "./models",
+        "@helpers": "./helpers"
     },
     "_moduleAliasIgnoreWarning": true,
     "repository": {
