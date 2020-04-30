@@ -13,10 +13,7 @@
         "@uploads": "./uploads",
         "@controllers": "./controllers",
         "@models": "./models",
-        "@helpers": "./helpers",
-        "@routes": "./routes",
-        "@config": "./config",
-        "@root": "."
+        "@helpers": "./helpers"
     },
     "_moduleAliasIgnoreWarning": true,
     "repository": {
