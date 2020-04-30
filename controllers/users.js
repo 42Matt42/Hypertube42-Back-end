@@ -189,13 +189,14 @@ exports.putUser = ((req, res, next) => {
                 if (err) {
                     return res.status(500).json({error: "Failed to create token."});
                 }
-            return res.status(200).json({
-                status: "Success",
-                token: {
-                    exp,
-                    code: token,
-                },
-            });
+                return res.status(200).json({
+                    status: "Success",
+                    token: {
+                        exp,
+                        code: token,
+                    },
+                });
+            })
         })
         .catch(error => {
             console.log(error)
