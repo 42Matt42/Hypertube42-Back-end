@@ -5,6 +5,7 @@ var models = require('./models/');
 
 const config = require('./config/config');
 const usersRoutes = require('./routes/users');
+const oauthRoutes = require('./routes/oauth')
 
 const whitelist = ['http://localhost:8080','https://unruffled-benz-398ce5.netlify.com'];
 const corsOptions = {
@@ -26,6 +27,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use('/users', usersRoutes);
+app.use('/oauth', oauthRoutes)
 
 //force:true to drop all tables every time
 models.dbc.sync({force:true}).then(function() {
