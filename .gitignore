@@ -7,6 +7,9 @@
 *.rar
 *.tar
 *.zip
+*.jpg
+*.jpeg
+*.png
 
 # Logs and databases #
 ######################
