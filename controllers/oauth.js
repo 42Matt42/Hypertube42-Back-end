@@ -173,3 +173,55 @@ exports.redirectFacebook = async (req, res) => {
         })
     }
 }
+exports.redirectReddit = async (req, res) => {
+    let code = req.query.code
+    try {
+        let response = await axios.post('https://www.reddit.com/api/v1/access_token',
+            "grant_type=authorization_code&code="+code+"&redirect_uri="+config.redirectReddit
+        , {
+                headers: {
+                Accept: 'application/x-www-form-urlencoded',
+                'Content-Type': "application/x-www-form-urlencoded",
+                'Authorization': "Basic "+ new Buffer.from(`${config.clientReddit}:${config.secretReddit}`).toString('base64')
+            }
+        })
+        let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
+        axios.defaults.headers.common[
+            'Authorization'
+        ] = `Bearer ${response.data.access_token}`
+        let userData = await axios.get('https://oauth.reddit.com/api/v1/me')
+        console.log(userData.data)
+        // if (!userData.data.email || !userData.data.first_name || !userData.data.last_name) {
+        //     return res.redirect(304, 'http://localhost:8080/login')
+        // }
+        // let name = userData.data.first_name + ' ' + userData.data.last_name
+        // let result = await checkOrCreateUser(
+        //     userData.data.email,
+        //     name,
+        //     userData.data.login,
+        //     userData.data.image_url
+        // )
+        // const jwt_token = jwt.sign(
+        //     {
+        //         exp: exp,
+        //         data: {
+        //             id: result.dataValues.id,
+        //             username: result.dataValues.username,
+        //             photo: result.dataValues.photo,
+        //         },
+        //     },
+        //     config.jwt
+        // )
+        // return res.redirect('http://localhost:8080?code=' + jwt_token)
+    } catch (error) {
+        console.log(error)
+        if (error.response.status == 401) {
+            console.log(error.response.data)
+            return res.redirect('http://localhost:8080')
+        }
+        if (error.name === 'SequelizeUniqueConstraintError') return res.redirect('http://localhost:8080')
+        return res.status(error).json({
+            error: error,
+        })
+    }
+}
