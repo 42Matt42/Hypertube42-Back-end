@@ -68,7 +68,7 @@ exports.getUser = ((req, res) => {
         where: {
             username,
         },
-        attributes: {exclude: ['password', 'token']}
+        attributes: {exclude: ['password', 'token', 'token_creation']}
     })
         .then(user => {
             if (!user) {
