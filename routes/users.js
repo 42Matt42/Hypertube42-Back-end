@@ -7,7 +7,7 @@ router.post('/login', usersController.login);
 
 router.put('/user/:username/email',auth.verifyToken, usersController.updateEmail);
 router.route('/user/:username')
-    .get(usersController.getUser)
+    .get(auth.verifyToken, usersController.getUser)
     .put(auth.verifyToken, usersController.putUser);
 
 
