@@ -94,7 +94,7 @@ exports.updateEmail = ((req, res, next) => {
     let username = req.params.username;
     let email = req.body.email;
 
-   // check if email already exists
+    // check if email already exists
     if (!email) {
         return res.status(400).json({
             error: "Email missing",
@@ -169,34 +169,53 @@ exports.putUser = ((req, res, next) => {
     //     password = bcrypt.hashSync(password, 8);
     // }
 
-    models.user.update({
-        firstName, lastName, username, language
-    }, {
+    models.user.findOne({
         where: {
-                username: currentUsername,
-                disabled: 0
-            }
+            username: currentUsername,
+            disabled: 0
+        }
     })
-        .then(() => {
-            let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
-            jwt.sign({
-                exp: exp,
-                data: {
-                    id: req.userId,
-                    username: username
-                }
-            }, config.jwt, (err, token) => {
-                if (err) {
-                    return res.status(500).json({error: "Failed to create token."});
-                }
-                return res.status(200).json({
-                    status: "Success",
-                    token: {
-                        exp,
-                        code: token,
-                    },
-                });
-            })
+        .then(user => {
+            if (!user) {
+                return res.status(500).json({error: "User not found or disabled"});
+            } else {
+                models.user.update({
+                    firstName, lastName, username, language
+                }, {
+                    where: {
+                        username: currentUsername,
+                        disabled: 0
+                    }
+                })
+                    .then(() => {
+                        let exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24);
+                        jwt.sign({
+                            exp: exp,
+                            data: {
+                                id: req.userId,
+                                username: username
+                            }
+                        }, config.jwt, (err, token) => {
+                            if (err) {
+                                return res.status(500).json({error: "Failed to create token."});
+                            }
+                            return res.status(200).json({
+                                status: "Success",
+                                token: {
+                                    exp,
+                                    code: token,
+                                },
+                            });
+                        })
+                    })
+                    .catch(error => {
+                        console.log(error)
+                        let errorMessages = errors.getErrors(error)
+                        return res.status(405).json({
+                            error: errorMessages
+                        });
+                    })
+            }
         })
         .catch(error => {
             console.log(error)
