@@ -83,10 +83,8 @@ exports.getUser = (req, res) => {
           error: 'User not found',
         })
       }
-      if (user.photo != 'https://via.placeholder.com/150') {
-        let bitmap = fs.readFileSync(user.photo)
-        user.photo = new Buffer.from(bitmap).toString('base64')
-      }
+      let bitmap = fs.readFileSync(user.photo)
+      user.photo = new Buffer.from(bitmap).toString('base64')
       return res.status(200).json({
         status: 'Success',
         user,
