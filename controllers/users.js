@@ -70,7 +70,8 @@ exports.login = (req, res) => {
 
 exports.getUser = (req, res) => {
   let username = req.params.username
-  models.user
+  if (username === req.username){
+    models.user
     .findOne({
       where: {
         username,
@@ -96,7 +97,35 @@ exports.getUser = (req, res) => {
         error: 'Database error',
       })
     })
+  } else {
+  models.user
+    .findOne({
+      where: {
+        username,
+      },
+      attributes: { exclude: ['email','password', 'token', 'token_creation'] },
+    })
+    .then((user) => {
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found',
+        })
+      }
+      let bitmap = fs.readFileSync(user.photo)
+      user.photo = new Buffer.from(bitmap).toString('base64')
+      return res.status(200).json({
+        status: 'Success',
+        user,
+      })
+    })
+    .catch((error) => {
+      console.log(error)
+      return res.status(500).json({
+        error: 'Database error',
+      })
+    })}
 }
+
 
 exports.updateEmail = (req, res, next) => {
   let username = req.params.username
@@ -324,7 +353,7 @@ exports.activateUser = (req, res) => {
     )
     .then((result) => {
       if (result == 1) {
-        return res.status(200).json({ status: 'Success' })
+        return res.redirect(`${config.server}`)
       }
       return res.status(403).json({ error: 'Token invalid' })
     })
