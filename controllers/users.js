@@ -353,7 +353,7 @@ exports.activateUser = (req, res) => {
     )
     .then((result) => {
       if (result == 1) {
-        return res.redirect(`${config.server}`)
+        return res.redirect(`http://localhost:8080`)
       }
       return res.status(403).json({ error: 'Token invalid' })
     })
