@@ -39,11 +39,16 @@ function downloadFile(fileUrl, outputLocationPath) {
 
 async function checkOrCreateUser(email, fullName, username, photo) {
   try {
-    let pathname = 'uploads/'
-    let filename = uuidv4() + path.extname(photo)
-    let outputLocationPath = pathname + filename
-    console.log(outputLocationPath)
-    await downloadFile(photo, outputLocationPath)
+    let outputLocationPath = ''
+    if (photo) {
+      let pathname = 'uploads/'
+      let filename = uuidv4() + path.extname(photo)
+      let outputLocationPath = pathname + filename
+      console.log(outputLocationPath)
+      await downloadFile(photo, outputLocationPath)
+    } else {
+      outputLocationPath = 'uploads/image.png'
+    }
     let result = await db.user.findAll({
       attributes: [
         'id',
