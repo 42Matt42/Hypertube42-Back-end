@@ -86,7 +86,7 @@ module.exports = (dbc, DataTypes) => {
             photo: {
                 type: DataTypes.STRING,
                 allowNull: false,
-                defaultValue: 'https://via.placeholder.com/150',
+                defaultValue: 'uploads/image.png',
             },
             language: {
                 type: DataTypes.ENUM('english', 'french', 'spanish'),

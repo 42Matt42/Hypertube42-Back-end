@@ -1,11 +1,54 @@
 const jwt = require('jsonwebtoken')
+const fs = require('fs')
 const config = require('../config/config')
 const axios = require('axios').default
 const db = require('../models/index')
 const sequelize = require('sequelize')
+const { v4: uuidv4 } = require('uuid')
+const path = require('path')
+
+function downloadFile(fileUrl, outputLocationPath) {
+  const writer = fs.createWriteStream(outputLocationPath)
+
+  return axios({
+    method: 'get',
+    url: fileUrl,
+    responseType: 'stream',
+  }).then((response) => {
+    //ensure that the user can call `then()` only when the file has
+    //been downloaded entirely.
+
+    return new Promise((resolve, reject) => {
+      response.data.pipe(writer)
+      let error = null
+      writer.on('error', (err) => {
+        error = err
+        writer.close()
+        reject(err)
+      })
+      writer.on('close', () => {
+        if (!error) {
+          resolve(true)
+        }
+        //no need to call the reject here, as it will have been called in the
+        //'error' stream;
+      })
+    })
+  })
+}
 
 async function checkOrCreateUser(email, fullName, username, photo) {
   try {
+    let outputLocationPath = ''
+    if (photo) {
+      let pathname = 'uploads/'
+      let filename = uuidv4() + path.extname(photo)
+      let outputLocationPath = pathname + filename
+      console.log(outputLocationPath)
+      await downloadFile(photo, outputLocationPath)
+    } else {
+      outputLocationPath = 'uploads/image.png'
+    }
     let result = await db.user.findAll({
       attributes: [
         'id',
@@ -23,7 +66,7 @@ async function checkOrCreateUser(email, fullName, username, photo) {
         lastName: fullName.split(' ')[1],
         email,
         username,
-        photo,
+        photo: outputLocationPath,
         password: 'àchangerplustard',
       })
     } else {
