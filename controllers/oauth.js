@@ -42,7 +42,8 @@ async function checkOrCreateUser(email, fullName, username, photo) {
     let pathname = 'uploads/'
     let filename = uuidv4() + path.extname(photo)
     let outputLocationPath = pathname + filename
-    await downloadFile(photo, pathname)
+    console.log(outputLocationPath)
+    await downloadFile(photo, outputLocationPath)
     let result = await db.user.findAll({
       attributes: [
         'id',
