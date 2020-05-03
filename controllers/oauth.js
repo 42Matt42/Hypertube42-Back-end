@@ -61,7 +61,7 @@ async function checkOrCreateUser(email, fullName, username, photo) {
         lastName: fullName.split(' ')[1],
         email,
         username,
-        outputLocationPath,
+        photo: outputLocationPath,
         password: 'àchangerplustard',
       })
     } else {
