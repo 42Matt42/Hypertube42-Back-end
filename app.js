@@ -6,6 +6,7 @@ const models = require('./models/')
 const config = require('./config/config')
 const usersRoutes = require('./routes/users')
 const oauthRoutes = require('./routes/oauth')
+const streamRoutes = require('./routes/stream')
 
 const whitelist = [
   'http://localhost:8080',
@@ -31,6 +32,7 @@ app.use(bodyParser.json())
 
 app.use('/users', usersRoutes)
 app.use('/oauth', oauthRoutes)
+app.use('/stream', streamRoutes)
 
 //force:true to drop all tables every time
 models.dbc.sync({ force: true }).then(function () {
