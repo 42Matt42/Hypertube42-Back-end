@@ -8,7 +8,7 @@ const templates = {
         html1: ',<br><br>Your email has been used to register on HT42. If you haven\'t registered, please ignore this email.' +
             'To activate the account, please click on this link: ',
         html2: '<br><br>Kind regards,<br>HT42 Team',
-        link: '/user/activation/'
+        link: '/signup/'
     },
     RESET: {
         subject:'Reset password',
