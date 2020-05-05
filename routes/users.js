@@ -27,7 +27,7 @@ router.post('/user', usersController.postUser)
 
 router.put('/activation', usersController.reactivateUser) //send email to activate account again
 router.get('/activation/:token', usersController.activateUser) //validate password reset / activation token
-router.get('/email/:token', usersController.changeEmail) //validate password reset / activation token
+router.get('/email/:token', usersController.changeEmail) //validate email reset token
 router.post('/user/reset', usersController.sendResetPassword) //send email to reset password
 
 module.exports = router

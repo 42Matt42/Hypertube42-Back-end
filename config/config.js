@@ -10,6 +10,7 @@ module.exports = {
   jwt: process.env.JWT,
   sg: process.env.SG,
   server: process.env.SERVER,
+  front: process.env.FRONT,
   email: process.env.EMAIL,
   client42: process.env.CLIENT42,
   secret42: process.env.SECRET42,

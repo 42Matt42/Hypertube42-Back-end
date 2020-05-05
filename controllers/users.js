@@ -353,7 +353,7 @@ exports.activateUser = (req, res) => {
     )
     .then((result) => {
       if (result == 1) {
-        return res.redirect(`http://localhost:8080`)
+        return res.status(200).json({status: "Success"});
       }
       return res.status(403).json({ error: 'Token invalid' })
     })
@@ -379,7 +379,7 @@ exports.changeEmail = (req, res) => {
     .then((tempEmail) => {
       // console.log(tempEmail)
       if (!tempEmail) {
-        return res.status(404).json({
+        return res.status(403).json({
           error: 'Token invalid',
         })
       }
