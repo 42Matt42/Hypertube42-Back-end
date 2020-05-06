@@ -16,7 +16,7 @@ const templates = {
         html1: ',<br><br>You have requested to reset your password at HT42. If you haven\'t done that, please ignore this email.' +
             'To reset your password, please click on this link: ',
         html2: '<br><br>Kind regards,<br>HT42 Team',
-        link: '/user/activation/'
+        link: '/resetpassworddscvalid/'
     },
     CHANGEEMAIL: {
         subject:'Change email',
