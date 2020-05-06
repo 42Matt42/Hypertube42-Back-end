@@ -17,14 +17,3 @@ exports.verifyToken = (req, res, next) => {
         next();
     });
 }
-
-exports.checkPassword = (req, res, next, password) => {
-    if (password.length > 15 || password.length < 6) {
-        return res.status(405).json({
-            error: "Password should contain between 6 and 15 characters"
-        });
-    }
-    return true;
-}
-
-// module.exports = verifyToken;

@@ -6,8 +6,8 @@ const config = require('../config/config')
 const auth = require('../helpers/auth')
 const emailHelper = require('../helpers/email')
 const moment = require('moment')
-const { Sequelize, sequelize } = require('sequelize')
-const { v4: uuidv4 } = require('uuid')
+const {Sequelize, sequelize} = require('sequelize')
+const {v4: uuidv4} = require('uuid')
 const db = require('../models/index')
 const fs = require('fs')
 
@@ -22,9 +22,9 @@ exports.login = (req, res) => {
   }
 
   models.user
-    .findOne({ where: { username } })
+    .findOne({where: {username}})
     .then((user) => {
-      if (!user || !bcrypt.compareSync(password, user.password)) {
+      if (!user || !bcrypt.compareSync(password, user.password_hash)) {
         return res.status(403).json({
           error: 'Username or password incorrect',
           token: null,
@@ -48,7 +48,7 @@ exports.login = (req, res) => {
         config.jwt,
         (err, token) => {
           if (err) {
-            return res.status(500).json({ error: 'Failed to create token.' })
+            return res.status(500).json({error: 'Failed to create token.'})
           }
           return res.status(200).json({
             status: 'Success',
@@ -70,60 +70,61 @@ exports.login = (req, res) => {
 
 exports.getUser = (req, res) => {
   let username = req.params.username
-  if (username === req.username){
+  if (username === req.username) {
     models.user
-    .findOne({
-      where: {
-        username,
-      },
-      attributes: { exclude: ['password', 'token', 'token_creation'] },
-    })
-    .then((user) => {
-      if (!user) {
-        return res.status(404).json({
-          error: 'User not found',
+      .findOne({
+        where: {
+          username,
+        },
+        attributes: {exclude: ['password_hash', 'token', 'token_creation']},
+      })
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({
+            error: 'User not found',
+          })
+        }
+        let bitmap = fs.readFileSync(user.photo)
+        user.photo = new Buffer.from(bitmap).toString('base64')
+        return res.status(200).json({
+          status: 'Success',
+          user,
         })
-      }
-      let bitmap = fs.readFileSync(user.photo)
-      user.photo = new Buffer.from(bitmap).toString('base64')
-      return res.status(200).json({
-        status: 'Success',
-        user,
       })
-    })
-    .catch((error) => {
-      console.log(error)
-      return res.status(500).json({
-        error: 'Database error',
+      .catch((error) => {
+        console.log(error)
+        return res.status(500).json({
+          error: 'Database error',
+        })
       })
-    })
   } else {
-  models.user
-    .findOne({
-      where: {
-        username,
-      },
-      attributes: { exclude: ['email','password', 'token', 'token_creation'] },
-    })
-    .then((user) => {
-      if (!user) {
-        return res.status(404).json({
-          error: 'User not found',
+    models.user
+      .findOne({
+        where: {
+          username,
+        },
+        attributes: {exclude: ['email', 'password_hash', 'token', 'token_creation']},
+      })
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({
+            error: 'User not found',
+          })
+        }
+        let bitmap = fs.readFileSync(user.photo)
+        user.photo = new Buffer.from(bitmap).toString('base64')
+        return res.status(200).json({
+          status: 'Success',
+          user,
         })
-      }
-      let bitmap = fs.readFileSync(user.photo)
-      user.photo = new Buffer.from(bitmap).toString('base64')
-      return res.status(200).json({
-        status: 'Success',
-        user,
       })
-    })
-    .catch((error) => {
-      console.log(error)
-      return res.status(500).json({
-        error: 'Database error',
+      .catch((error) => {
+        console.log(error)
+        return res.status(500).json({
+          error: 'Database error',
+        })
       })
-    })}
+  }
 }
 
 
@@ -139,10 +140,10 @@ exports.updateEmail = (req, res, next) => {
   }
   if (username.toString() !== req.username.toString()) {
     console.log('not same user', username, req.username)
-    return res.status(403).send({ error: 'Unauthorized' })
+    return res.status(403).send({error: 'Unauthorized'})
   }
   models.user
-    .findOne({ where: { email } })
+    .findOne({where: {email}})
     .then((user) => {
       if (user) {
         if (user.username === req.username) {
@@ -183,19 +184,19 @@ exports.updateEmail = (req, res, next) => {
                   }
                   return res
                     .status(500)
-                    .json({ error: 'Failed to send email.' })
+                    .json({error: 'Failed to send email.'})
                 },
                 function (error) {
                   console.log(error)
                   return res
                     .status(500)
-                    .json({ error: 'Failed to send email.' })
+                    .json({error: 'Failed to send email.'})
                 }
               )
           })
           .catch((error) => {
             console.log(error)
-            return res.status(400).json({ error: 'Database error' })
+            return res.status(400).json({error: 'Database error'})
           })
       }
     })
@@ -211,14 +212,11 @@ exports.updateEmail = (req, res, next) => {
 exports.putUser = (req, res, next) => {
   //todo send token if username updated?
   let currentUsername = req.params.username
-  let { firstName, lastName, language, username } = req.body
+  let {firstName, lastName, language, username} = req.body
   if (currentUsername !== req.username) {
     console.log(currentUsername, req.username)
-    return res.status(403).send({ error: 'Unauthorized' })
+    return res.status(403).send({error: 'Unauthorized'})
   }
-  // if (password && auth.checkPassword(req, res, next, password)) {
-  //     password = bcrypt.hashSync(password, 8);
-  // }
 
   models.user
     .findOne({
@@ -229,7 +227,7 @@ exports.putUser = (req, res, next) => {
     })
     .then((user) => {
       if (!user) {
-        return res.status(500).json({ error: 'User not found or disabled' })
+        return res.status(500).json({error: 'User not found or disabled'})
       } else {
         models.user
           .update(
@@ -261,7 +259,7 @@ exports.putUser = (req, res, next) => {
                 if (err) {
                   return res
                     .status(500)
-                    .json({ error: 'Failed to create token.' })
+                    .json({error: 'Failed to create token.'})
                 }
                 return res.status(200).json({
                   status: 'Success',
@@ -292,10 +290,9 @@ exports.putUser = (req, res, next) => {
 }
 
 exports.postUser = (req, res, next) => {
-  let { firstName, lastName, email, username, password, photo } = req.body
-  if (password && auth.checkPassword(req, res, next, password)) {
-    password = bcrypt.hashSync(password, 8)
-  }
+  let {firstName, lastName, email, username, password, photo} = req.body
+
+console.log(password)
   models.user
     .create({
       firstName,
@@ -316,11 +313,11 @@ exports.postUser = (req, res, next) => {
                   status: 'Success',
                 })
               }
-              return res.status(500).json({ error: 'Failed to send email.' })
+              return res.status(500).json({error: 'Failed to send email.'})
             },
             function (error) {
               console.log(error)
-              return res.status(500).json({ error: 'Failed to send email.' })
+              return res.status(500).json({error: 'Failed to send email.'})
             }
           )
       }
@@ -336,30 +333,46 @@ exports.postUser = (req, res, next) => {
 
 exports.activateUser = (req, res) => {
   let token = req.params.token
+  //check if the token is for a disabled user
   models.user
-    .update(
-      {
-        disabled: 0,
-        token: null,
-      },
-      {
-        where: {
-          token,
-          token_creation: {
-            [Sequelize.Op.gte]: moment().subtract(10, 'minutes').toISOString(),
-          },
-        },
+    .findOne({where: {token}})
+    .then((user) => {
+      if (user && !user.disabled) {
+        return res.status(403).json({
+          error: 'Account is already enabled',
+        })
+      } else {
+        models.user
+          .update(
+            {
+              disabled: 0,
+              token: null,
+            },
+            {
+              where: {
+                disabled: 1,
+                token,
+                token_creation: {
+                  [Sequelize.Op.gte]: moment().subtract(10, 'minutes').toISOString(),
+                },
+              },
+            }
+          )
+          .then((result) => {
+            if (result == 1) {
+              return res.status(200).json({status: "Success"});
+            }
+            return res.status(403).json({error: 'Token invalid'})
+          })
+          .catch((error) => {
+            console.log(error)
+            return res.status(400).json({error: 'Database error'})
+          })
       }
-    )
-    .then((result) => {
-      if (result == 1) {
-        return res.status(200).json({status: "Success"});
-      }
-      return res.status(403).json({ error: 'Token invalid' })
     })
     .catch((error) => {
       console.log(error)
-      return res.status(400).json({ error: 'Database error' })
+      return res.status(400).json({error: 'Database error'})
     })
 }
 
@@ -374,7 +387,7 @@ exports.changeEmail = (req, res) => {
           [Sequelize.Op.gte]: moment().subtract(10, 'minutes').toISOString(),
         },
       },
-      attributes: { exclude: ['password', 'token'] },
+      attributes: {exclude: ['password_hash', 'token']},
     })
     .then((tempEmail) => {
       // console.log(tempEmail)
@@ -397,13 +410,13 @@ exports.changeEmail = (req, res) => {
         .then((result) => {
           if (result == 1) {
             tempEmail.destroy()
-            return res.status(200).json({ status: 'Success' })
+            return res.status(200).json({status: 'Success'})
           }
-          return res.status(403).json({ error: 'Token invalid' })
+          return res.status(403).json({error: 'Token invalid'})
         })
         .catch((error) => {
           console.log(error)
-          return res.status(400).json({ error: 'Database error' })
+          return res.status(400).json({error: 'Database error'})
         })
     })
     .catch((error) => {
@@ -421,12 +434,12 @@ exports.reactivateUser = (req, res, next) => {
 exports.updateAvatar = (req, res, next) => {
   let username = req.params.username
   if (!req.file) {
-    res.status(400).json({ message: 'send 1 avatar' })
+    res.status(400).json({message: 'send 1 avatar'})
   }
   models.user
     .update(
-      { photo: req.file.path },
-      { returning: true, where: { username: username } }
+      {photo: req.file.path},
+      {returning: true, where: {username: username}}
     )
     .then(function (result) {
       if (result[1] === 0) {
@@ -456,15 +469,15 @@ sendEmail = (req, res, next, template) => {
   }
 
   models.user
-    .findOne({ where: { email } })
+    .findOne({where: {email}})
     .then((user) => {
       if (!user) {
-        return res.status(400).json({ error: "Email doesn't exist" })
+        return res.status(400).json({error: "Email doesn't exist"})
       }
       if (template === emailHelper.templates.ACTIVATE && !user.disabled) {
-        return res.status(409).json({ error: 'Account already enabled' })
+        return res.status(409).json({error: 'Account already enabled'})
       } else if (template === emailHelper.templates.RESET && user.disabled) {
-        return res.status(409).json({ error: 'Account is disabled' })
+        return res.status(409).json({error: 'Account is disabled'})
       }
       models.user
         .update(
@@ -472,12 +485,12 @@ sendEmail = (req, res, next, template) => {
             token,
             token_creation,
           },
-          { where: { email } }
+          {where: {email}}
         )
         .spread((affectedCount, affectedRows) => {
           console.log(affectedCount, affectedRows)
           if (affectedCount !== 1) {
-            return res.status(400).json({ error: 'Database error' })
+            return res.status(400).json({error: 'Database error'})
           }
           emailHelper.send(email, user.username, token, template).then(
             function (result) {
@@ -486,11 +499,11 @@ sendEmail = (req, res, next, template) => {
                   status: 'Success',
                 })
               }
-              return res.status(500).json({ error: 'Failed to send email' })
+              return res.status(500).json({error: 'Failed to send email'})
             },
             function (error) {
               console.log(error)
-              return res.status(500).json({ error: 'Failed to send email' })
+              return res.status(500).json({error: 'Failed to send email'})
             }
           )
         })
@@ -507,4 +520,116 @@ sendEmail = (req, res, next, template) => {
         error: 'Database error',
       })
     })
+}
+
+
+exports.resetPassword = (req, res, next) => {
+  let token = req.body.token
+  let password = req.body.password
+  console.log(req.body)
+
+  if (!password || !token) {
+    return res.status(400).json({
+      error: 'Token/password missing',
+    })
+  }
+
+  //check if the token is for an activated user
+  models.user
+    .findOne({where: {token}})
+    .then((user) => {
+      if (user && user.disabled) {
+        return res.status(403).json({
+          error: 'Account is disabled',
+        })
+      } else {
+        models.user
+          .update(
+            {
+              token: null,
+              password
+            },
+            {
+              where: {
+                disabled: 0,
+                token,
+                token_creation: {
+                  [Sequelize.Op.gte]: moment().subtract(10, 'minutes').toISOString(),
+                },
+              },
+            }
+          )
+          .then((result) => {
+            if (result == 1) {
+              return res.status(200).json({status: "Success"});
+            }
+            return res.status(403).json({error: 'Token invalid'})
+          })
+          .catch((error) => {
+            console.log(error)
+            return res.status(400).json({error: 'Database error'})
+          })
+      }
+    })
+    .catch((error) => {
+      console.log(error)
+      return res.status(400).json({error: 'Database error'})
+    })
+}
+
+
+exports.updatePassword = (req, res, next) => {
+  let username = req.params.username
+  let password = req.body.password
+  let newPassword = req.body.new_password
+
+  if (username !== req.username) {
+    return res.status(403).send({error: 'Unauthorized'})
+  }
+  if (!password || !newPassword) {
+    return res.status(400).json({
+      error: 'Old/new password missing',
+    })
+  }
+  models.user
+    .findOne({
+      where: {
+        username: username,
+        disabled: 0,
+      },
+    })
+    .then((user) => {
+      if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+        return res.status(403).json({
+          error: 'Username or password incorrect',
+        })
+      } else {
+        models.user
+          .update({password: newPassword},
+            {
+              where: {username},
+            }
+          )
+          .then(() => {
+            return res.status(200).json({
+              status: 'Success',
+            })
+          })
+          .catch((error) => {
+            console.log(error)
+            let errorMessages = errors.getErrors(error)
+            return res.status(405).json({
+              error: errorMessages,
+            })
+          })
+      }
+    })
+    .catch((error) => {
+      console.log(error)
+      let errorMessages = errors.getErrors(error)
+      return res.status(405).json({
+        error: errorMessages,
+      })
+    })
+
 }
