@@ -39,11 +39,7 @@ function downloadFile(fileUrl, outputLocationPath) {
 
 async function checkOrCreateUser(email, fullName, username, photo) {
   try {
-    let pathname = 'uploads/'
-    let filename = uuidv4() + path.extname(photo)
-    let outputLocationPath = pathname + filename
-    console.log(outputLocationPath)
-    await downloadFile(photo, outputLocationPath)
+
     let result = await db.user.findAndCountAll({
       attributes: [
         'id',
@@ -56,6 +52,12 @@ async function checkOrCreateUser(email, fullName, username, photo) {
       },
     })
     if (result.count === 0) {
+      let pathname = 'uploads/'
+      let filename = uuidv4() + path.extname(photo)
+      let outputLocationPath = pathname + filename
+      console.log(outputLocationPath)
+      await downloadFile(photo, outputLocationPath)
+
       result = await db.user.create({
         firstName: fullName.split(' ')[0],
         lastName: fullName.split(' ')[1],
@@ -174,7 +176,7 @@ exports.redirectFacebook = async (req, res) => {
   let code = req.query.code
   try {
     let response = await axios.get(
-      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=1245062255689643&client_secret=aa162bbac8aa37524abe9216c5cdeb85&code=${code}&redirect_uri=${config.server}/oauth/fb`
+      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.server}/oauth/fb`
     )
     let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
     let userData = await axios.get(
