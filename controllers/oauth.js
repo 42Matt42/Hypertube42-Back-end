@@ -183,6 +183,8 @@ exports.redirectFacebook = async (req, res) => {
       `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`
     )
     let result = {}
+    console.log(response.data.access_token)
+    console.log(userData)
     if (userData.data.email) {
       result = await checkOrCreateUser(
         userData.data.email,
