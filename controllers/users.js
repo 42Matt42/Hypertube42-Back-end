@@ -525,7 +525,7 @@ sendEmail = (req, res, next, template) => {
 
 exports.resetPassword = (req, res, next) => {
   let token = req.body.token
-  let password = req.body.password
+  let password = req.body.new_password
   console.log(req.body)
 
   if (!password || !token) {
