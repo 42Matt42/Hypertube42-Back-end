@@ -44,18 +44,18 @@ async function checkOrCreateUser(email, fullName, username, photo) {
     let outputLocationPath = pathname + filename
     console.log(outputLocationPath)
     await downloadFile(photo, outputLocationPath)
-    let result = await db.user.findAll({
+    let result = await db.user.findAndCountAll({
       attributes: [
         'id',
         'username',
         'photo',
-        [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+      //   [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
       ],
       where: {
         email,
       },
     })
-    if (result[0].dataValues.n_id === 0) {
+    if (result.count === 0) {
       result = await db.user.create({
         firstName: fullName.split(' ')[0],
         lastName: fullName.split(' ')[1],
@@ -65,7 +65,7 @@ async function checkOrCreateUser(email, fullName, username, photo) {
         password: 'àchangerplustard',
       })
     } else {
-      result = result[0]
+      result = result.rows[0]
     }
     return result
   } catch (error) {
@@ -119,7 +119,7 @@ exports.redirect42 = async (req, res) => {
       return res.redirect('http://localhost:8080')
     }
     console.log(error)
-    return res.status(error).json({
+    return res.status(400).json({
       error: error,
     })
   }
