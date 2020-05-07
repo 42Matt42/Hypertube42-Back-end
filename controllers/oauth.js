@@ -39,23 +39,25 @@ function downloadFile(fileUrl, outputLocationPath) {
 
 async function checkOrCreateUser(email, fullName, username, photo) {
   try {
-    let pathname = 'uploads/'
-    let filename = uuidv4() + path.extname(photo)
-    let outputLocationPath = pathname + filename
-    console.log(outputLocationPath)
-    await downloadFile(photo, outputLocationPath)
-    let result = await db.user.findAll({
+
+    let result = await db.user.findAndCountAll({
       attributes: [
         'id',
         'username',
         'photo',
-        [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+      //   [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
       ],
       where: {
         email,
       },
     })
-    if (result[0].dataValues.n_id === 0) {
+    if (result.count === 0) {
+      let pathname = 'uploads/'
+      let filename = uuidv4() + path.extname(photo)
+      let outputLocationPath = pathname + filename
+      console.log(outputLocationPath)
+      await downloadFile(photo, outputLocationPath)
+
       result = await db.user.create({
         firstName: fullName.split(' ')[0],
         lastName: fullName.split(' ')[1],
@@ -65,7 +67,7 @@ async function checkOrCreateUser(email, fullName, username, photo) {
         password: 'àchangerplustard',
       })
     } else {
-      result = result[0]
+      result = result.rows[0]
     }
     return result
   } catch (error) {
@@ -119,7 +121,7 @@ exports.redirect42 = async (req, res) => {
       return res.redirect('http://localhost:8080')
     }
     console.log(error)
-    return res.status(error).json({
+    return res.status(400).json({
       error: error,
     })
   }
@@ -174,13 +176,15 @@ exports.redirectFacebook = async (req, res) => {
   let code = req.query.code
   try {
     let response = await axios.get(
-      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=1245062255689643&client_secret=aa162bbac8aa37524abe9216c5cdeb85&code=${code}&redirect_uri=${config.server}/oauth/fb`
+      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.server}/oauth/fb`
     )
     let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24
     let userData = await axios.get(
       `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`
     )
     let result = {}
+    console.log(response.data.access_token)
+    console.log(userData)
     if (userData.data.email) {
       result = await checkOrCreateUser(
         userData.data.email,
