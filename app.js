@@ -6,6 +6,10 @@ const models = require('./models/')
 const config = require('./config/config')
 const usersRoutes = require('./routes/users')
 const oauthRoutes = require('./routes/oauth')
+const filmsRoutes = require('./routes/films')
+
+//TODO for dev only
+const seed = require('./dev/seed')
 
 const whitelist = [
   'http://localhost:8080',
@@ -31,9 +35,12 @@ app.use(bodyParser.json())
 
 app.use('/users', usersRoutes)
 app.use('/oauth', oauthRoutes)
+app.use('/films', filmsRoutes)
 
 //force:true to drop all tables every time
 models.dbc.sync({ force: true }).then(function () {
+  //TODO for dev only
+  seed.testUser();
   app.listen(config.port, () => {
     console.log('Server running on port %s', config.port)
     app.emit('appStarted')
