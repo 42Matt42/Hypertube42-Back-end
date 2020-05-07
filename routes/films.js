@@ -6,8 +6,8 @@ const auth = require('../helpers/auth')
 //film views
 router
   .route('/view')
-// .get(auth.verifyToken, filmsController.getViews)
-// .post(auth.verifyToken, filmsController.postView)
+  .get(auth.verifyToken, filmsController.getViews)
+  .post(auth.verifyToken, filmsController.postView)
 
 //comments for films
 router
