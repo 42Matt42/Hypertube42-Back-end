@@ -13,27 +13,27 @@ module.exports = (dbc, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
-
         //TODO ref validation regex
+      },
 
-        validate: {
-        // isNull: function (val) {
-        //   if (!val) {
-        //     throw new Error("Please provide email")
-        //   }
-        // }
-        //     is: {
-        //         args: [/^[a-z]+$/i],
-        //         msg: "Film_ref can contain only letters"
-        //     },
-        }
+      path: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      percentage: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      viewed: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
       },
     },
   );
 
-    Film.associate = function (models) {
-        models.user.hasMany(models.filmView);
-    };
+  Film.associate = function (models) {
+    models.user.hasMany(models.filmView);
+  };
 
   return Film;
 }

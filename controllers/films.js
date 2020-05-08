@@ -158,6 +158,12 @@ exports.postView = async (req, res) => {
       userId: req.userId,
       date,
     })
+    let result = await models.film.update({
+      viewed: date,
+    },
+      {
+        where: { id: filmId }
+      })
 
     let filmInfo = await models.filmView.findOne({
       where: {filmId, userId: req.userId},
