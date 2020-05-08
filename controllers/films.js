@@ -1,19 +1,15 @@
 const models = require('../models')
 const errors = require('../helpers/errors')
 const config = require('../config/config')
-// const auth = require('../helpers/auth')
 const moment = require('moment')
 const {Sequelize, sequelize} = require('sequelize')
-// const db = require('../models/index')
 
 async function createFilm(filmRef) {
   try {
-    console.log("create:", filmRef)
     let result = await models.film.create({
       filmRef
     })
     return result
-
 
   } catch (error) {
     throw new Error(error)
@@ -73,9 +69,14 @@ exports.getComments = async (req, res) => {
 exports.postComment = async (req, res) => {
   try {
     let text = req.body.text
+    if (!text || text === "") {
+      return res.status(405).json({
+        error: "Text cannot be empty",
+      })
+    }
+
     let filmRef = req.params.filmRef
     let film = await checkFilm(filmRef)
-
     if (film === null) {
       film = await createFilm(filmRef)
     }
@@ -102,43 +103,45 @@ exports.postComment = async (req, res) => {
       status: 'Success',
       comment: commentInfo,
     })
-  } catch (error) {
-    console.log(error)
+  } catch
+    (error) {
+    if (error.name === 'SequelizeValidationError') {
+      let errorMessages = errors.getErrors(error)
+      return res.status(405).json({
+        error: errorMessages,
+      })
+    }
     return res.status(500).json({
       error: error,
     })
   }
-
 }
 
 
 exports.getViews = async (req, res) => {
   try {
     let userId = req.userId
-
-      let viewInfo = await models.filmView.findAll({
-        where: {userId},
-        attributes: [
-          'date',
-          [Sequelize.col('film.filmRef'), 'filmRef']
-        ],
-        include: [{
-          model: models.film,
-          attributes: []
-        }],
-      })
-      return res.status(200).json({
-        status: 'Success',
-        views: viewInfo
-      })
-
+    let viewInfo = await models.filmView.findAll({
+      where: {userId},
+      attributes: [
+        'date',
+        [Sequelize.col('film.filmRef'), 'filmRef']
+      ],
+      include: [{
+        model: models.film,
+        attributes: []
+      }],
+    })
+    return res.status(200).json({
+      status: 'Success',
+      views: viewInfo
+    })
   } catch (error) {
     console.log(error)
     return res.status(500).json({
       error: error,
     })
   }
-
 }
 
 exports.postView = async (req, res) => {
@@ -151,13 +154,11 @@ exports.postView = async (req, res) => {
     let filmId = film.dataValues.id
     let date = moment().toISOString()
     let view = await models.filmView.upsert({
-      // where: {
-        filmId,
-        userId: req.userId,
-        date,
-      // }
+      filmId,
+      userId: req.userId,
+      date,
     })
-    console.log(view)
+
     let filmInfo = await models.filmView.findOne({
       where: {filmId, userId: req.userId},
       attributes: [
