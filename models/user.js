@@ -16,6 +16,10 @@ module.exports = (dbc, DataTypes) => {
             args: [/^[a-z]+$/i],
             msg: "First name can contain only letters"
           },
+          len: {
+            args: [2, 15],
+            msg: "Firstname should contain between 2 and 15 characters"
+          },
           isNull: function (val) {
             if (!val) {
               throw new Error("Please provide first name")
@@ -30,6 +34,10 @@ module.exports = (dbc, DataTypes) => {
           is: {
             args: [/^[a-z]+$/i],
             msg: "Last name can contain only letters"
+          },
+          len: {
+            args: [2, 15],
+            msg: "Lastname should contain between 2 and 15 characters"
           },
           isNull: function (val) {
             if (!val) {
@@ -64,8 +72,8 @@ module.exports = (dbc, DataTypes) => {
             msg: "Username can contain only letters and numbers"
           },
           len: {
-            args: [3, 15],
-            msg: "Username should contain between 3 and 15 characters"
+            args: [4, 15],
+            msg: "Username should contain between 4 and 15 characters"
           }
         }
       },
@@ -80,9 +88,9 @@ module.exports = (dbc, DataTypes) => {
         type: DataTypes.VIRTUAL,
         allowNull: false,
         validate: {
-          len: {
-            args: [6, 60],
-            msg: "Password should contain between 6 and 60 characters"
+          is: {
+            args: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,42}$/],
+            msg: "8-42 characters, at least one uppercase letter, one lowercase letter, one number"
           },
         },
           set: function (value) {
