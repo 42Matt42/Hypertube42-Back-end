@@ -549,6 +549,11 @@ exports.resetPassword = (req, res, next) => {
         return res.status(403).json({
           error: 'Account is disabled',
         })
+      } else if (user && bcrypt.compareSync(password, user.password_hash)) {
+        return res.status(400).json({
+          error: 'New password should be different from old password',
+          token: null,
+        })
       } else {
         models.user
           .update(
@@ -593,10 +598,15 @@ exports.updatePassword = (req, res, next) => {
   if (username !== req.username) {
     return res.status(403).send({error: 'Unauthorized'})
   }
+
   if (!password || !newPassword) {
     return res.status(400).json({
       error: 'Old/new password missing',
     })
+  }
+
+  if (password === newPassword) {
+    return res.status(400).send({error: 'New password should be different from old password'})
   }
   models.user
     .findOne({
