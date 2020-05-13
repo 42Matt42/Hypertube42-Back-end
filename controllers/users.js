@@ -93,7 +93,7 @@ exports.getUser = (req, res) => {
       })
       .catch((error) => {
         console.log(error)
-        return res.status(500).json({
+        return res.status(400).json({
           error: 'Database error',
         })
       })
@@ -120,7 +120,7 @@ exports.getUser = (req, res) => {
       })
       .catch((error) => {
         console.log(error)
-        return res.status(500).json({
+        return res.status(400).json({
           error: 'Database error',
         })
       })
@@ -152,7 +152,7 @@ exports.updateEmail = (req, res, next) => {
             message: 'Same email',
           })
         }
-        return res.status(404).json({
+        return res.status(400).json({
           error: 'Email already in use',
         })
       } else {
@@ -202,9 +202,8 @@ exports.updateEmail = (req, res, next) => {
     })
     .catch((error) => {
       console.log(error)
-      let errorMessages = errors.getErrors(error)
-      return res.status(405).json({
-        error: errorMessages,
+      return res.status(400).json({
+        error: error,
       })
     })
 }
@@ -227,7 +226,7 @@ exports.putUser = (req, res, next) => {
     })
     .then((user) => {
       if (!user) {
-        return res.status(500).json({error: 'User not found or disabled'})
+        return res.status(405).json({error: 'User not found or disabled'})
       } else {
         models.user
           .update(
@@ -272,19 +271,23 @@ exports.putUser = (req, res, next) => {
             )
           })
           .catch((error) => {
-            console.log(error)
-            let errorMessages = errors.getErrors(error)
-            return res.status(405).json({
-              error: errorMessages,
+            // console.log(error)
+            if (error.name === 'SequelizeValidationError') {
+              let errorMessages = errors.getErrors(error)
+              return res.status(405).json({
+                error: errorMessages,
+              })
+            }
+            return res.status(400).json({
+              error: error,
             })
           })
       }
     })
     .catch((error) => {
-      console.log(error)
-      let errorMessages = errors.getErrors(error)
-      return res.status(405).json({
-        error: errorMessages,
+      // console.log(error)
+      return res.status(400).json({
+        error: error,
       })
     })
 }
@@ -292,7 +295,6 @@ exports.putUser = (req, res, next) => {
 exports.postUser = (req, res, next) => {
   let {firstName, lastName, email, username, password, photo} = req.body
 
-console.log(password)
   models.user
     .create({
       firstName,
@@ -324,9 +326,14 @@ console.log(password)
     })
     .catch((error) => {
       // console.log(error)
-      let errorMessages = errors.getErrors(error)
+      if (error.name === 'SequelizeValidationError') {
+        let errorMessages = errors.getErrors(error)
+        return res.status(405).json({
+          error: errorMessages,
+        })
+      }
       return res.status(405).json({
-        error: errorMessages,
+        error: error,
       })
     })
 }
@@ -421,7 +428,7 @@ exports.changeEmail = (req, res) => {
     })
     .catch((error) => {
       console.log(error)
-      return res.status(500).json({
+      return res.status(400).json({
         error: 'Database error',
       })
     })
@@ -542,6 +549,11 @@ exports.resetPassword = (req, res, next) => {
         return res.status(403).json({
           error: 'Account is disabled',
         })
+      } else if (user && bcrypt.compareSync(password, user.password_hash)) {
+        return res.status(400).json({
+          error: 'New password should be different from old password',
+          token: null,
+        })
       } else {
         models.user
           .update(
@@ -586,10 +598,15 @@ exports.updatePassword = (req, res, next) => {
   if (username !== req.username) {
     return res.status(403).send({error: 'Unauthorized'})
   }
+
   if (!password || !newPassword) {
     return res.status(400).json({
       error: 'Old/new password missing',
     })
+  }
+
+  if (password === newPassword) {
+    return res.status(400).send({error: 'New password should be different from old password'})
   }
   models.user
     .findOne({
@@ -616,19 +633,23 @@ exports.updatePassword = (req, res, next) => {
             })
           })
           .catch((error) => {
-            console.log(error)
-            let errorMessages = errors.getErrors(error)
-            return res.status(405).json({
-              error: errorMessages,
+            // console.log(error)
+            if (error.name === 'SequelizeValidationError') {
+              let errorMessages = errors.getErrors(error)
+              return res.status(405).json({
+                error: errorMessages,
+              })
+            }
+            return res.status(400).json({
+              error: error,
             })
           })
       }
     })
     .catch((error) => {
-      console.log(error)
-      let errorMessages = errors.getErrors(error)
-      return res.status(405).json({
-        error: errorMessages,
+      // console.log(error)
+      return res.status(400).json({
+        error: error,
       })
     })
 
