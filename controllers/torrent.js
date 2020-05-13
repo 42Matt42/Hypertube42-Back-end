@@ -1,6 +1,12 @@
 //TODO testing
 //Current version MAY run but hasn't been tested yet
 
+/**
+ * magnet -> dossier
+ * truncate to 10 char
+ * progress->console.log
+ */
+
 const fs = require('fs')
 const path = require('path')
 const mime = require('mime')
@@ -24,7 +30,7 @@ const tracker_list = [
 ]
 
 function computeMagnetHash(hash) {
-  //Placeholder function to resolve hash query
+  //tracker part of the magnet ignored as the list is fed to the engine directly
   return `magnet:?xt=urn:btih:${hash}`
 }
 
@@ -62,14 +68,13 @@ function streamMovie(res, file, start, end, mimetype, basedir, filename) {
 
 exports.getMovie = (req, res, next) => {
   let id = req.params.hash
-  let quality = req.params.quality
   let basedir = movie_path + id
 
   try {
     let magnet = computeMagnetHash(id)
     //query DB For path, filename missing for check
-    if (checkMovieExists(`${basedir}/${quality}`)) {
-      let filepath = `${basedir}/${quality}`
+    if (checkMovieExists(`${basedir}`)) {
+      let filepath = `${basedir}`
       let stats = fs.statSync(filepath)
       let size = stats['size']
       let start = 0
@@ -168,29 +173,15 @@ exports.getMovie = (req, res, next) => {
         })
       })
       engine.on('download', () => {
+        //Feedback only
         const progress = Math.round((engine.swarm.downloaded / fileSize) * 100)
-        //modify in DB percentage
+        console.log(`Movie downloaded: ${progress}`)
       })
       engine.on('idle', () => {
-        //save in DB path + download date
+        //save in DB path
       })
     }
   } catch (error) {
     throw new Error(error)
   }
 }
-/* function fetchMovieFromDb(id, quality) {
-    try {
-        result = await db.movie.findOne({
-            where: {
-                id,
-                quality
-            }
-        })
-        //consider torrent to magnet hash conversion?
-        return result
-    } catch (error) {
-        throw new Error(error)
-    }
-    
-} */
