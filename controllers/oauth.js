@@ -64,7 +64,7 @@ async function checkOrCreateUser(email, fullName, username, photo) {
         email,
         username,
         photo: outputLocationPath,
-        password: 'RandomPassword2a.lol',
+        password: 'RandomPassword2alol',
       })
     } else {
       result = result.rows[0]
