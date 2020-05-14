@@ -121,9 +121,7 @@ exports.redirect42 = async (req, res) => {
       return res.redirect('http://localhost:8080')
     }
     console.log(error)
-    return res.status(400).json({
-      error: error,
-    })
+    return res.redirect('http://localhost:8080')
   }
 }
 exports.redirectGitHub = async (req, res) => {
@@ -164,12 +162,7 @@ exports.redirectGitHub = async (req, res) => {
     return res.redirect('http://localhost:8080?code=' + jwt_token)
   } catch (error) {
     console.log(error)
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.redirect('http://localhost:8080')
-    }
-    return res.status(500).json({
-      error: error,
-    })
+    return res.redirect('http://localhost:8080')
   }
 }
 exports.redirectFacebook = async (req, res) => {
@@ -211,12 +204,7 @@ exports.redirectFacebook = async (req, res) => {
     return res.redirect('http://localhost:8080?code=' + jwt_token)
   } catch (error) {
     console.log(error)
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.redirect('http://localhost:8080')
-    }
-    return res.status(500).json({
-      error: error,
-    })
+    return res.redirect('http://localhost:8080')
   }
 }
 exports.redirectReddit = async (req, res) => {
