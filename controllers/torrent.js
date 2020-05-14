@@ -1,12 +1,12 @@
 //TODO testing
 //Current version MAY run but hasn't been tested yet
 
-/**
- * magnet -> dossier
+/** TODO
  * truncate to 10 char
- * progress->console.log
+ * make it async
  */
 
+const models = require('../models')
 const fs = require('fs')
 const path = require('path')
 const mime = require('mime')
@@ -29,21 +29,27 @@ const tracker_list = [
   'udp://tracker.leechers-paradise.org:6969',
 ]
 
-function computeMagnetHash(hash) {
-  //tracker part of the magnet ignored as the list is fed to the engine directly
-  return `magnet:?xt=urn:btih:${hash}`
+async function upsert_movie(values, condition) {
+  //Placeholder function
+  //Final version should not interact with non existant movie entry
+  return db.film.findOne({ where: condition }).then(function (obj) {
+    if (obj) return obj.update(values)
+    return Model.create(values)
+  })
 }
 
-function checkMovieExists(path) {
+function checkMovieExists(movie) {
   try {
-    fs.stat(path)
-    return true
+    if (fs.existsSync(movie.path)) {
+      console.log('?found: ' + path)
+      return true
+    }
   } catch (error) {
     return false
   }
 }
 
-function streamMovie(res, file, start, end, mimetype, basedir, filename) {
+async function streamMovie(res, file, start, end, mimetype, basedir, filename) {
   //TODO: consider Duplex instead
   if (mimetype === 'video/mp4' || mimetype === 'video/mp4') {
     let stream = file.createReadStream({
@@ -66,21 +72,22 @@ function streamMovie(res, file, start, end, mimetype, basedir, filename) {
   }
 }
 
-exports.getMovie = (req, res, next) => {
+exports.getMovie = async (req, res, next) => {
   let id = req.params.hash
   let basedir = movie_path + id
-
   try {
-    let magnet = computeMagnetHash(id)
-    //query DB For path, filename missing for check
+    let magnet = `magnet:?xt=urn:btih:${id}`
+    const movie = await models.film.findOne({ where: hash })
     if (checkMovieExists(`${basedir}`)) {
-      let filepath = `${basedir}`
+      console.log('found file')
+      let filepath = movie.path
       let stats = fs.statSync(filepath)
       let size = stats['size']
       let start = 0
       let end = size
       let mimetype = mime.lookup(filepath)
       if (req.headers.range) {
+        console.log('sending chunk of file')
         let range = req.headers.range
         let chunks = range.replace(/bytes=/, '').split('-')
         let chunkStart = chunks[0]
@@ -103,6 +110,7 @@ exports.getMovie = (req, res, next) => {
         })
         pump(stream, res)
       } else {
+        console.log('sending whole file')
         res.writeHead(200, {
           'Content-Length': size,
           'Content-Type': mimetype,
@@ -114,6 +122,7 @@ exports.getMovie = (req, res, next) => {
         pump(stream, res)
       }
     } else {
+      console.log('starting torrent')
       const engine = torrentStream(magnet, {
         connections: 100,
         uploads: 10,
@@ -145,7 +154,9 @@ exports.getMovie = (req, res, next) => {
           let end = fileSize
           fileName = file.path.replace(path.extname(file.name), '')
           fileExt = path.extname(file.name)
+          console.log(`selected ${fileName}${fileExt} Size: ${fileSize}`)
           if (req.headers.range) {
+            console.log('sending chunk of torrent')
             let range = req.headers.range
             let chunks = range.replace(/bytes=/, '').split('-')
             let chunkStart = chunks[0]
@@ -162,12 +173,15 @@ exports.getMovie = (req, res, next) => {
               'Content-Type': mimetype,
               Connection: 'keep-alive',
             })
+            console.log('ready to stream chunk:' + filename)
             streamMovie(res, file, start, end, mimetype, basedir, fileName)
           } else {
+            console.log('sending full torrent')
             res.writeHead(200, {
               'Content-Length': file.length,
               'Content-Type': mimetype,
             })
+            console.log('ready to stream full:' + filename)
             streamMovie(res, file, start, end, mimetype, basedir, fileName)
           }
         })
@@ -178,7 +192,11 @@ exports.getMovie = (req, res, next) => {
         console.log(`Movie downloaded: ${progress}`)
       })
       engine.on('idle', () => {
-        //save in DB path
+        console.log(`Movie path:${basedir}/${fileName}${fileExt}`)
+        upsert_movie(
+          { path: `${basedir}/${fileName}${fileExt}` },
+          { magnet: id }
+        )
       })
     }
   } catch (error) {
