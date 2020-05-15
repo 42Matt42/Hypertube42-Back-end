@@ -1,9 +1,13 @@
-//TODO testing
-//Current version MAY run but hasn't been tested yet
-
 /** TODO
- * truncate to 10 char
- * make it async
+ * truncate to 10 char folder containing movie
+ * testing all possibilities
+ * check if is unreachable from outside
+ * 
+ * ALREADY TESTED: download from hash -> stream whole file
+ * !!!: db has constraints violation while adding new hash
+ * 
+ * tested with 'curl localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V' 
+ * -> Movie path:./movies/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V/[ OxTorrent.com ] Fabuleuses.2019.FRENCH.HDRip.XviD-EXTREME.avi
  */
 
 const models = require('../models')
@@ -32,9 +36,9 @@ const tracker_list = [
 async function upsert_movie(values, condition) {
   //Placeholder function
   //Final version should not interact with non existant movie entry
-  return db.film.findOne({ where: condition }).then(function (obj) {
+  return models.film.findOne({ where: condition }).then(function (obj) {
     if (obj) return obj.update(values)
-    return Model.create(values)
+    return models.film.create(values)
   })
 }
 
@@ -72,12 +76,12 @@ async function streamMovie(res, file, start, end, mimetype, basedir, filename) {
   }
 }
 
-exports.getMovie = async (req, res, next) => {
-  let id = req.params.hash
-  let basedir = movie_path + id
+exports.getMovie = (req, res) => {
+  let hash = req.params.hash
+  let basedir = movie_path + hash
   try {
-    let magnet = `magnet:?xt=urn:btih:${id}`
-    const movie = await models.film.findOne({ where: hash })
+    let magnet = `magnet:?xt=urn:btih:${hash}`
+    const movie = models.film.findOne({ where: { magnet: hash } })
     if (checkMovieExists(`${basedir}`)) {
       console.log('found file')
       let filepath = movie.path
@@ -173,7 +177,7 @@ exports.getMovie = async (req, res, next) => {
               'Content-Type': mimetype,
               Connection: 'keep-alive',
             })
-            console.log('ready to stream chunk:' + filename)
+            console.log('ready to stream chunk:' + fileName)
             streamMovie(res, file, start, end, mimetype, basedir, fileName)
           } else {
             console.log('sending full torrent')
@@ -181,7 +185,7 @@ exports.getMovie = async (req, res, next) => {
               'Content-Length': file.length,
               'Content-Type': mimetype,
             })
-            console.log('ready to stream full:' + filename)
+            console.log('ready to stream full:' + fileName)
             streamMovie(res, file, start, end, mimetype, basedir, fileName)
           }
         })
@@ -195,7 +199,7 @@ exports.getMovie = async (req, res, next) => {
         console.log(`Movie path:${basedir}/${fileName}${fileExt}`)
         upsert_movie(
           { path: `${basedir}/${fileName}${fileExt}` },
-          { magnet: id }
+          { magnet: hash }
         )
       })
     }
