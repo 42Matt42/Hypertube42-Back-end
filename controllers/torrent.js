@@ -1,10 +1,8 @@
 /** TODO
- * truncate to 10 char folder containing movie
  * testing all possibilities
  * check if is unreachable from outside
  * 
  * ALREADY TESTED: download from hash -> stream whole file
- * !!!: db has constraints violation while adding new hash
  * 
  * tested with 'curl localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V' 
  * -> Movie path:./movies/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V/[ OxTorrent.com ] Fabuleuses.2019.FRENCH.HDRip.XviD-EXTREME.avi
@@ -34,18 +32,19 @@ const tracker_list = [
 ]
 
 async function upsert_movie(values, condition) {
-  //Placeholder function
-  //Final version should not interact with non existant movie entry
   return models.film.findOne({ where: condition }).then(function (obj) {
-    if (obj) return obj.update(values)
+    if (obj) {
+      return obj.update(values)
+    }
+    //Fallback if not found. Will error out as key constraint not met
     return models.film.create(values)
   })
 }
 
 function checkMovieExists(movie) {
+  console.log('found?: ' + movie)
   try {
-    if (fs.existsSync(movie.path)) {
-      console.log('?found: ' + path)
+    if (fs.existsSync(movie)) {
       return true
     }
   } catch (error) {
@@ -55,7 +54,7 @@ function checkMovieExists(movie) {
 
 async function streamMovie(res, file, start, end, mimetype, basedir, filename) {
   //TODO: consider Duplex instead
-  if (mimetype === 'video/mp4' || mimetype === 'video/mp4') {
+  if (mimetype === 'video/mp4' || mimetype === 'video/ogg') {
     let stream = file.createReadStream({
       start: start,
       end: end,
@@ -66,23 +65,26 @@ async function streamMovie(res, file, start, end, mimetype, basedir, filename) {
       start: start,
       end: end,
     })
-    //Consider faster conversion
-    let stream = ffmpeg(torrent)
-      .videoCodec('libx264')
-      .audioCodec('libfdk_aac')
-      .format('mp4')
-      .save(`${basedir}/${filename}.mp4`)
-    pump(stream, res)
+    try {
+      let stream = ffmpeg(torrent)
+      .videoCodec('libvpx')
+      .audioCodec('libvorbis')
+      .format('webm')
+      .save(`${basedir}/${filename}.webm`)
+      pump(stream, res)
+    } catch (error) {
+      throw new Error(error)
+    }
   }
 }
 
 exports.getMovie = (req, res) => {
-  let hash = req.params.hash
-  let basedir = movie_path + hash
   try {
+    let hash = req.params.hash
+    let basedir = movie_path + hash.substring(0,10)
     let magnet = `magnet:?xt=urn:btih:${hash}`
-    const movie = models.film.findOne({ where: { magnet: hash } })
-    if (checkMovieExists(`${basedir}`)) {
+    const movie = models.film.findOne({ where: { magnet: hash } }) //ASYNC ANSWER IN PROMISE
+    if (checkMovieExists(movie.path)) {
       console.log('found file')
       let filepath = movie.path
       let stats = fs.statSync(filepath)
@@ -142,6 +144,7 @@ exports.getMovie = (req, res) => {
           if (
             path.extname(file.name) !== '.mp4' &&
             path.extname(file.name) !== '.avi' &&
+            path.extname(file.name) !== '.ogg' &&
             path.extname(file.name) !== '.mkv' &&
             path.extname(file.name) !== '.webm'
           ) {
