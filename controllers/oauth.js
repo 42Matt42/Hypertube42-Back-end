@@ -173,15 +173,13 @@ exports.redirectFacebook = async (req, res) => {
       `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`
     )
     let result = {}
-    console.log(response.data.access_token)
-    console.log(userData)
     console.log(userData.data)
     if (userData.data.email) {
       result = await checkOrCreateUser(
         userData.data.email,
         userData.data.name,
-        userData.data.login,
-        userData.data.avatar_url
+        userData.data.last_name,
+        userData.data.picture.data.url
       )
     } else {
       return res.redirect('http://localhost:8080')
