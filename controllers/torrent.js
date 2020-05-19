@@ -1,10 +1,10 @@
 /** TODO
  * testing all possibilities
  * check if is unreachable from outside
- * 
+ *
  * ALREADY TESTED: download from hash -> stream whole file
- * 
- * tested with 'curl localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V' 
+ *
+ * tested with 'curl localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V'
  * -> Movie path:./movies/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V/[ OxTorrent.com ] Fabuleuses.2019.FRENCH.HDRip.XviD-EXTREME.avi
  */
 
@@ -41,18 +41,7 @@ async function upsert_movie(values, condition) {
   })
 }
 
-function checkMovieExists(movie) {
-  console.log('found?: ' + movie)
-  try {
-    if (fs.existsSync(movie)) {
-      return true
-    }
-  } catch (error) {
-    return false
-  }
-}
-
-async function streamMovie(res, file, start, end, mimetype, basedir, filename) {
+function streamMovie(res, file, start, end, mimetype, basedir, filename, hash) {
   //TODO: consider Duplex instead
   if (mimetype === 'video/mp4' || mimetype === 'video/ogg') {
     let stream = file.createReadStream({
@@ -67,146 +56,166 @@ async function streamMovie(res, file, start, end, mimetype, basedir, filename) {
     })
     try {
       let stream = ffmpeg(torrent)
-      .videoCodec('libvpx')
-      .audioCodec('libvorbis')
-      .format('webm')
-      .save(`${basedir}/${filename}.webm`)
-      pump(stream, res)
+        .videoCodec('libvpx-vp9')
+        .audioBitrate(128)
+			  .videoBitrate(1024)
+        .format('webm')
+        .outputOptions(['-deadline realtime', '-movflags frag_keyframe+faststart'])
+        .on('progress', (progress) => {
+          console.log('[FFMPEG] Converting: ' + progress.percent + '%')
+        })
+        .on('error', (err, stdout, stderr) => {
+          console.log(`[FFMPEG] Cannot process video: ${err.message}`);
+          console.log(`[FFMPEG] stdout: ${stdout}`);
+          console.log(`[FFMPEG] stderr: ${stderr}`);
+        })
+        //.save(`${basedir}/${filename}.webm`)
+        .pipe(res) //This, for some reason, blocks. Not like the other would work better
+      //fix DB path to only serve the converted movie
+      //upsert_movie({ path: `${basedir}/${filename}.webm` }, { magnet: hash })
+      //pump(stream, res)
     } catch (error) {
       throw new Error(error)
     }
   }
 }
 
-exports.getMovie = (req, res) => {
+exports.getMovie = async (req, res, next) => {
   try {
     let hash = req.params.hash
-    let basedir = movie_path + hash.substring(0,10)
+    let basedir = movie_path + hash.substring(0, 10)
     let magnet = `magnet:?xt=urn:btih:${hash}`
-    const movie = models.film.findOne({ where: { magnet: hash } }) //ASYNC ANSWER IN PROMISE
-    if (checkMovieExists(movie.path)) {
-      console.log('found file')
-      let filepath = movie.path
-      let stats = fs.statSync(filepath)
-      let size = stats['size']
-      let start = 0
-      let end = size
-      let mimetype = mime.lookup(filepath)
-      if (req.headers.range) {
-        console.log('sending chunk of file')
-        let range = req.headers.range
-        let chunks = range.replace(/bytes=/, '').split('-')
-        let chunkStart = chunks[0]
-        let chunkEnd = chunks[1]
-        start = parseInt(chunkStart, 10)
-        if (chunkEnd) {
-          end = chunkEnd
-        }
-        let chunkSize = end - start
-        res.writeHead(206, {
-          'Content-Range': `bytes ${start}-${end}/${size}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunkSize,
-          'Content-Type': mimetype,
-          Connection: 'keep-alive',
-        })
-        let stream = fs.createReadStream({
-          start: start,
-          end: end,
-        })
-        pump(stream, res)
-      } else {
-        console.log('sending whole file')
-        res.writeHead(200, {
-          'Content-Length': size,
-          'Content-Type': mimetype,
-        })
-        let stream = fs.createReadStream({
-          start: start,
-          end: end,
-        })
-        pump(stream, res)
-      }
-    } else {
-      console.log('starting torrent')
-      const engine = torrentStream(magnet, {
-        connections: 100,
-        uploads: 10,
-        path: basedir,
-        verify: true,
-        trackers: tracker_list,
-      })
-      let fileName = null
-      let fileExt = null
-      let fileSize = null
-      engine.on('ready', () => {
-        engine.files.forEach((file) => {
-          if (
-            path.extname(file.name) !== '.mp4' &&
-            path.extname(file.name) !== '.avi' &&
-            path.extname(file.name) !== '.ogg' &&
-            path.extname(file.name) !== '.mkv' &&
-            path.extname(file.name) !== '.webm'
-          ) {
-            file.deselect()
-            return
-          }
-          let mimetype = mime.lookup(file.name)
-          let mimeVideo = mimetype.split('/')[0]
-          if (mimeVideo === 'video') {
-            file.select()
-          }
-          fileSize = file.length
-          let start = 0
-          let end = fileSize
-          fileName = file.path.replace(path.extname(file.name), '')
-          fileExt = path.extname(file.name)
-          console.log(`selected ${fileName}${fileExt} Size: ${fileSize}`)
-          if (req.headers.range) {
-            console.log('sending chunk of torrent')
-            let range = req.headers.range
-            let chunks = range.replace(/bytes=/, '').split('-')
-            let chunkStart = chunks[0]
-            let chunkEnd = chunks[1]
-            start = parseInt(chunkStart, 10)
-            if (chunkEnd) {
-              end = chunkEnd
-            }
-            let chunkSize = end - start
-            res.writeHead(206, {
-              'Content-Range': `bytes ${start}-${end}/${file.length}`,
-              'Accept-Ranges': 'bytes',
-              'Content-Length': chunkSize,
-              'Content-Type': mimetype,
-              Connection: 'keep-alive',
-            })
-            console.log('ready to stream chunk:' + fileName)
-            streamMovie(res, file, start, end, mimetype, basedir, fileName)
-          } else {
-            console.log('sending full torrent')
-            res.writeHead(200, {
-              'Content-Length': file.length,
-              'Content-Type': mimetype,
-            })
-            console.log('ready to stream full:' + fileName)
-            streamMovie(res, file, start, end, mimetype, basedir, fileName)
-          }
-        })
-      })
-      engine.on('download', () => {
-        //Feedback only
-        const progress = Math.round((engine.swarm.downloaded / fileSize) * 100)
-        console.log(`Movie downloaded: ${progress}`)
-      })
-      engine.on('idle', () => {
-        console.log(`Movie path:${basedir}/${fileName}${fileExt}`)
-        upsert_movie(
-          { path: `${basedir}/${fileName}${fileExt}` },
-          { magnet: hash }
-        )
-      })
+    let filepath = ''
+    const movie = await models.film.findOne({ where: { magnet: hash } })
+    if (movie !== null) {
+      filepath = movie.path
     }
+    fs.access(filepath, fs.F_OK, (notfound) => {
+      if (notfound) {
+        console.log('starting torrent')
+        const engine = torrentStream(magnet, {
+          connections: 100,
+          uploads: 10,
+          path: basedir,
+          verify: true,
+          trackers: tracker_list,
+        })
+        let fileName = null
+        let fileExt = null
+        let fileSize = null
+        engine.on('ready', () => {
+          engine.files.forEach((file) => {
+            if (
+              path.extname(file.name) !== '.mp4' &&
+              path.extname(file.name) !== '.avi' &&
+              path.extname(file.name) !== '.ogg' &&
+              path.extname(file.name) !== '.mkv' &&
+              path.extname(file.name) !== '.webm'
+            ) {
+              file.deselect()
+              return
+            }
+            let mimetype = mime.lookup(file.name)
+            let mimeVideo = mimetype.split('/')[0]
+            if (mimeVideo === 'video') {
+              file.select()
+            }
+            fileSize = file.length
+            let start = 0
+            let end = fileSize
+            fileName = file.path.replace(path.extname(file.name), '')
+            fileExt = path.extname(file.name)
+            console.log(`selected ${fileName}${fileExt} Size: ${fileSize}`)
+            if (req.headers.range) {
+              console.log('sending chunk of torrent')
+              let range = req.headers.range
+              let chunks = range.replace(/bytes=/, '').split('-')
+              let chunkStart = chunks[0]
+              let chunkEnd = chunks[1]
+              start = parseInt(chunkStart, 10)
+              if (chunkEnd) {
+                end = chunkEnd
+              }
+              let chunkSize = end - start
+              res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${file.length}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunkSize,
+                'Content-Type': mimetype,
+                Connection: 'keep-alive',
+              })
+              console.log('ready to stream chunk:' + fileName)
+              streamMovie(res, file, start, end, mimetype, basedir, fileName, hash)
+            } else {
+              console.log('sending full torrent')
+              res.writeHead(200, {
+                'Content-Length': file.length,
+                'Content-Type': mimetype,
+              })
+              console.log('ready to stream full:' + fileName)
+              streamMovie(res, file, start, end, mimetype, basedir, fileName, hash)
+            }
+          })
+        })
+        engine.on('download', () => {
+          //Feedback only
+          const progress = Math.round(
+            (engine.swarm.downloaded / fileSize) * 100
+          )
+          console.log(`Movie downloaded: ${progress} %`)
+        })
+        engine.on('idle', () => {
+          console.log(`Movie path:${basedir}/${fileName}${fileExt}`)
+          upsert_movie(
+            { path: `${basedir}/${fileName}${fileExt}` },
+            { magnet: hash }
+          )
+        })
+      } else {
+        console.log('found file')
+        let stats = fs.statSync(filepath)
+        let size = stats['size']
+        let start = 0
+        let end = size
+        let mimetype = mime.lookup(filepath)
+        if (req.headers.range) {
+          console.log('sending chunk of file')
+          let range = req.headers.range
+          let chunks = range.replace(/bytes=/, '').split('-')
+          let chunkStart = chunks[0]
+          let chunkEnd = chunks[1]
+          start = parseInt(chunkStart, 10)
+          if (chunkEnd) {
+            end = chunkEnd
+          }
+          let chunkSize = end - start
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${size}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunkSize,
+            'Content-Type': mimetype,
+            Connection: 'keep-alive',
+          })
+          let stream = fs.createReadStream(filepath, {
+            start: start,
+            end: end,
+          })
+          pump(stream, res)
+        } else {
+          console.log('sending whole file')
+          res.writeHead(200, {
+            'Content-Length': size,
+            'Content-Type': mimetype,
+          })
+          let stream = fs.createReadStream(filepath, {
+            start: start,
+            end: end,
+          })
+          pump(stream, res)
+        }
+      }
+    })
   } catch (error) {
-    throw new Error(error)
+    return next(error)
   }
 }
