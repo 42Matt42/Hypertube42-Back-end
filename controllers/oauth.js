@@ -39,13 +39,12 @@ function downloadFile(fileUrl, outputLocationPath) {
 
 async function checkOrCreateUser(email, fullName, username, photo) {
   try {
-
     let result = await db.user.findAndCountAll({
       attributes: [
         'id',
         'username',
         'photo',
-      //   [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
+        //   [sequelize.fn('COUNT', sequelize.col('id')), 'n_id'],
       ],
       where: {
         email,
@@ -55,16 +54,14 @@ async function checkOrCreateUser(email, fullName, username, photo) {
       let pathname = 'uploads/'
       let filename = uuidv4() + path.extname(photo)
       let outputLocationPath = pathname + filename
-      console.log(outputLocationPath)
       await downloadFile(photo, outputLocationPath)
-
       result = await db.user.create({
         firstName: fullName.split(' ')[0],
         lastName: fullName.split(' ')[1],
         email,
         username,
         photo: outputLocationPath,
-        password: 'àchangerplustard',
+        password: 'C688f438cdd6bb41fbea3e8aa7a9aed3',
       })
     } else {
       result = result.rows[0]
@@ -185,6 +182,7 @@ exports.redirectFacebook = async (req, res) => {
     let result = {}
     console.log(response.data.access_token)
     console.log(userData)
+    console.log(userData.data)
     if (userData.data.email) {
       result = await checkOrCreateUser(
         userData.data.email,
@@ -193,9 +191,7 @@ exports.redirectFacebook = async (req, res) => {
         userData.data.avatar_url
       )
     } else {
-      return res.status(400).json({
-        message: 'cannot register with facebook',
-      })
+      return res.redirect('http://localhost:8080')
     }
     const jwt_token = jwt.sign(
       {
