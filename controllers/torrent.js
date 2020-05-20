@@ -55,25 +55,32 @@ function streamMovie(res, file, start, end, mimetype, basedir, filename, hash) {
       end: end,
     })
     try {
+      //let writeStream = fs.createWriteStream(`${basedir}/${filename}.webm`)
       let stream = ffmpeg(torrent)
-        .videoCodec('libvpx-vp9')
-        .audioBitrate(128)
-			  .videoBitrate(1024)
+        //.videoCodec('libvpx-vp9')
+        //.audioBitrate(128)
+        //.videoBitrate(1024)
         .format('webm')
-        .outputOptions(['-deadline realtime', '-movflags frag_keyframe+faststart'])
-        .on('progress', (progress) => {
-          console.log('[FFMPEG] Converting: ' + progress.percent + '%')
-        })
+        .outputOptions(['-deadline realtime'])
+        /* .addOutputOptions(
+          '-movflags +frag_keyframe+separate_moof+omit_tfhd_offset+empty_moov'
+        ) */
+        //.outputOptions(['-movflags isml+frag_keyframe'])
         .on('error', (err, stdout, stderr) => {
-          console.log(`[FFMPEG] Cannot process video: ${err.message}`);
-          console.log(`[FFMPEG] stdout: ${stdout}`);
-          console.log(`[FFMPEG] stderr: ${stderr}`);
+          console.log(`[FFMPEG] Cannot process video: ${err.message}`)
+          console.log(`[FFMPEG] stdout: ${stdout}`)
+          console.log(`[FFMPEG] stderr: ${stderr}`)
         })
+        .pipe(res, {end: false}) //This, for some reason, blocks. Not like the other would work better
         //.save(`${basedir}/${filename}.webm`)
-        .pipe(res) //This, for some reason, blocks. Not like the other would work better
+      /* let filestream = fs.createReadStream(`${basedir}/${filename}.webm`)
+      filestream.on('open', function () {
+        // This just pipes the read stream to the response object (which goes to the client)
+        filestream.pipe(res);
+      }); */
       //fix DB path to only serve the converted movie
       //upsert_movie({ path: `${basedir}/${filename}.webm` }, { magnet: hash })
-      //pump(stream, res)
+      //pump(writeStream, res)
     } catch (error) {
       throw new Error(error)
     }
@@ -126,7 +133,7 @@ exports.getMovie = async (req, res, next) => {
             fileName = file.path.replace(path.extname(file.name), '')
             fileExt = path.extname(file.name)
             console.log(`selected ${fileName}${fileExt} Size: ${fileSize}`)
-            if (req.headers.range) {
+            /* if (req.headers.range) {
               console.log('sending chunk of torrent')
               let range = req.headers.range
               let chunks = range.replace(/bytes=/, '').split('-')
@@ -145,16 +152,33 @@ exports.getMovie = async (req, res, next) => {
                 Connection: 'keep-alive',
               })
               console.log('ready to stream chunk:' + fileName)
-              streamMovie(res, file, start, end, mimetype, basedir, fileName, hash)
-            } else {
-              console.log('sending full torrent')
+              streamMovie(
+                res,
+                file,
+                start,
+                end,
+                mimetype,
+                basedir,
+                fileName,
+                hash
+              )
+            } else { */
+              console.log('ready to stream full:' + fileName)
               res.writeHead(200, {
-                'Content-Length': file.length,
+                //'Content-Length': file.length,
                 'Content-Type': mimetype,
               })
-              console.log('ready to stream full:' + fileName)
-              streamMovie(res, file, start, end, mimetype, basedir, fileName, hash)
-            }
+              streamMovie(
+                res,
+                file,
+                start,
+                end,
+                mimetype,
+                basedir,
+                fileName,
+                hash
+              )
+            //}
           })
         })
         engine.on('download', () => {
