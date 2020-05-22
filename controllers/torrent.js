@@ -1,10 +1,21 @@
 /** TODO
- * testing all possibilities
- * check if is unreachable from outside
+ * check if it's unreachable from outside
+ * Consider implementing Duplex instead of current piping
  *
- * ALREADY TESTED: download from hash -> stream whole file (native format only)
- *
- * tested with 'curl localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V'
+ * ALREADY TESTED:
+ *    stream from torrent whole file (native format only)
+ *    stream from torrent whole file (avi->webm)(no chunk headers)
+ *    stream from torrent 'whole' file (avi->webm)(with chunk headers)
+ *    stream from file 'whole' file (avi->webm)(with chunk headers)
+ * 
+ * CAVEATS:
+ *    On the fly conversion does not save the result file
+ *    Player controls disabled when client requests whole file
+ *    Errors out on stream closed by client
+ *    Upsert in DB fails when movie entry doesn't exist
+ *    VLC requests the whole file as one chunk
+ * 
+ * tested with 'localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V'
  * -> Movie path:./movies/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V/[ OxTorrent.com ] Fabuleuses.2019.FRENCH.HDRip.XviD-EXTREME.avi
  */
 const util = require('util')
@@ -15,10 +26,8 @@ const path = require('path')
 const mime = require('mime')
 const torrentStream = require('torrent-stream')
 const pump = require('pump')
-const ffmpeg = require('fluent-ffmpeg');
-const { Converter } = require('ffmpeg-stream')
+const ffmpeg = require('fluent-ffmpeg')
 
-const converter = new Converter()
 const movie_path = './movies/'
 const tracker_list = [
   'udp://tracker.openbittorrent.com:80',
@@ -44,9 +53,7 @@ async function upsert_movie(values, condition) {
   })
 }
 
-async function streamMovie(res, file, start, end, mimetype) {
-  //TODO: consider Duplex instead
-  console.log(start + ' <> ' + end)
+function streamMovie(res, file, start, end, mimetype) {
   if (
     mimetype === 'video/mp4' ||
     mimetype === 'video/ogg' ||
@@ -63,36 +70,79 @@ async function streamMovie(res, file, start, end, mimetype) {
     console.log('Sending Raw file to stream')
     pump(stream, res)
   } else {
-    /* let chunkSize = end - start + 1
+    let chunkSize = end - start + 1
     res.writeHead(206, {
       'Content-Range': `bytes ${start}-${end}/${file.length}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
       'Content-Type': 'video/webm',
       Connection: 'keep-alive',
-    }) */
-
-    /* let torrent = file.createReadStream({
+    })
+    let torrent = file.createReadStream({
       start: start,
       end: end,
-    }) */
-    res.type('video/webm');
-    let command = ffmpeg(file.createReadStream())
-      .videoCodec('libvpx').audioCodec('libvorbis').format('webm')
+    })
+    let command = ffmpeg(torrent)
+      .videoCodec('libvpx')
+      .audioCodec('libvorbis')
+      .format('webm')
       .audioBitrate(128)
       .videoBitrate(1024)
-      .outputOptions([
-        //'-threads 2',
-        '-deadline realtime',
-        '-error-resilient 1'
-      ])
+      .outputOptions(['-deadline realtime', '-error-resilient 1'])
       .on('start', function (cmd) {
-        console.log(cmd);
+        console.log(cmd)
       })
       .on('error', function (err) {
-        console.error(err);
-      });
-    pump(command, res);
+        console.log(err)
+      })
+    pump(command, res)
+  }
+}
+
+function localfilestream(res, filepath, start, end, mimetype, size) {
+  //For on the fly conversion of saved movie, when played from a file
+  if (
+    mimetype === 'video/mp4' ||
+    mimetype === 'video/ogg' ||
+    mimetype === 'video/webm'
+  ) {
+    res.writeHead(200, {
+      'Content-Length': size,
+      'Content-Type': mimetype,
+    })
+    let stream = fs.createReadStream(filepath, {
+      start: start,
+      end: end,
+    })
+    console.log('Sending Raw file to stream')
+    pump(stream, res)
+  } else {
+    let chunkSize = end - start + 1
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': 'video/webm',
+      Connection: 'keep-alive',
+    })
+    let torrent = fs.createReadStream(filepath, {
+      start: start,
+      end: end,
+    })
+    let command = ffmpeg(torrent)
+      .videoCodec('libvpx')
+      .audioCodec('libvorbis')
+      .format('webm')
+      .audioBitrate(128)
+      .videoBitrate(1024)
+      .outputOptions(['-deadline realtime', '-error-resilient 1'])
+      .on('start', function (cmd) {
+        console.log(cmd)
+      })
+      .on('error', function (err) {
+        console.log(err)
+      })
+    pump(command, res)
   }
 }
 
@@ -153,10 +203,10 @@ exports.getMovie = async (req, res, next) => {
               } else {
                 end = file.length - 1
               }
-              console.log('ready to stream chunk:' + fileName)
+              console.log(`[FROM TORRENT] Streaming chunk:${start} <> ${end}`)
               streamMovie(res, file, start, end, mimetype)
             } else {
-              console.log('ready to stream full:' + fileName)
+              console.log('[FROM TORRENT] Streaming whole file')
               streamMovie(res, file, start, end, mimetype)
             }
           })
@@ -176,46 +226,27 @@ exports.getMovie = async (req, res, next) => {
           )
         })
       } else {
-        console.log('found file')
         let stats = fs.statSync(filepath)
         let size = stats['size']
         let start = 0
-        let end = size
+        let end = size - 1
         let mimetype = mime.lookup(filepath)
         if (req.headers.range) {
-          console.log('sending chunk of file')
           let range = req.headers.range
           let chunks = range.replace(/bytes=/, '').split('-')
           let chunkStart = chunks[0]
           let chunkEnd = chunks[1]
           start = parseInt(chunkStart, 10)
           if (chunkEnd) {
-            end = chunkEnd
+            end = parseInt(chunkEnd, 10)
+          } else {
+            end = size - 1
           }
-          let chunkSize = end - start
-          res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${size}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunkSize,
-            'Content-Type': mimetype,
-            Connection: 'keep-alive',
-          })
-          let stream = fs.createReadStream(filepath, {
-            start: start,
-            end: end,
-          })
-          pump(stream, res)
+          console.log(`[FROM FILE] Streaming chunk:${start} <> ${end}`)
+          localfilestream(res, filepath, start, end, mimetype, size)
         } else {
-          console.log('sending whole file')
-          res.writeHead(200, {
-            'Content-Length': size,
-            'Content-Type': mimetype,
-          })
-          let stream = fs.createReadStream(filepath, {
-            start: start,
-            end: end,
-          })
-          pump(stream, res)
+          console.log('[FROM FILE] Streaming whole file')
+          localfilestream(res, filepath, start, end, mimetype, size)
         }
       }
     })
