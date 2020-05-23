@@ -55,8 +55,8 @@ async function upsert_movie(values, condition) {
 
 function streamMovie(res, file, start, end, mimetype) {
   if (
-    mimetype === 'video/mp4' ||
-    mimetype === 'video/ogg' ||
+    /* mimetype === 'video/mp4' ||
+    mimetype === 'video/ogg' || */
     mimetype === 'video/webm'
   ) {
     res.writeHead(200, {
@@ -220,10 +220,11 @@ exports.getMovie = async (req, res, next) => {
         })
         engine.on('idle', () => {
           console.log(`Movie path:${basedir}/${fileName}${fileExt}`)
+          /* Temporarily removed. Will disable file checking from DB. Upcoming fix: add filmref from params
           upsert_movie(
             { path: `${basedir}/${fileName}${fileExt}` },
             { magnet: hash }
-          )
+          ) */
         })
       } else {
         let stats = fs.statSync(filepath)
