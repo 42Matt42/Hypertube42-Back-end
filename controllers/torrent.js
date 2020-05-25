@@ -1,21 +1,7 @@
 /** TODO
- * check if it's unreachable from outside
  * Consider implementing Duplex instead of current piping
  *
- * ALREADY TESTED:
- *    stream from torrent whole file (native format only)
- *    stream from torrent whole file (avi->webm)(no chunk headers)
- *    stream from torrent 'whole' file (avi->webm)(with chunk headers)
- *    stream from file 'whole' file (avi->webm)(with chunk headers)
- * 
- * CAVEATS:
- *    On the fly conversion does not save the result file
- *    Player controls disabled when client requests whole file
- *    Errors out on stream closed by client
- *    Upsert in DB fails when movie entry doesn't exist
- *    VLC requests the whole file as one chunk
- * 
- * tested with 'localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V'
+ * tested with 'localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V?id=11'
  * -> Movie path:./movies/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V/[ OxTorrent.com ] Fabuleuses.2019.FRENCH.HDRip.XviD-EXTREME.avi
  */
 const util = require('util')
@@ -44,18 +30,24 @@ const tracker_list = [
 ]
 
 async function upsert_movie(values, condition) {
-  return models.film.findOne({ where: condition }).then(function (obj) {
-    if (obj) {
-      return obj.update(values)
-    }
-    //Fallback if not found. Will error out as key constraint not met
-    return models.film.create(values)
-  })
+  return models.film
+    .findOne({ where: condition })
+    .then(function (obj) {
+      if (obj) {
+        return obj.update(values)
+      }
+      //Fallback if not found.
+      return models.film.create(values)
+    })
+    .catch(function (err) {
+      console.log(err, values)
+    })
 }
 
 function streamMovie(res, file, start, end, mimetype) {
   if (
-    /* mimetype === 'video/mp4' ||
+    /* Other <video> formats disabled to only send webm as possible mimetype 
+    mimetype === 'video/mp4' ||
     mimetype === 'video/ogg' || */
     mimetype === 'video/webm'
   ) {
@@ -93,7 +85,7 @@ function streamMovie(res, file, start, end, mimetype) {
         console.log(cmd)
       })
       .on('error', function (err) {
-        console.log(err)
+        //console.log(err)
       })
     pump(command, res)
   }
@@ -102,8 +94,8 @@ function streamMovie(res, file, start, end, mimetype) {
 function localfilestream(res, filepath, start, end, mimetype, size) {
   //For on the fly conversion of saved movie, when played from a file
   if (
-    mimetype === 'video/mp4' ||
-    mimetype === 'video/ogg' ||
+    /* mimetype === 'video/mp4' ||
+    mimetype === 'video/ogg' || */
     mimetype === 'video/webm'
   ) {
     res.writeHead(200, {
@@ -140,7 +132,7 @@ function localfilestream(res, filepath, start, end, mimetype, size) {
         console.log(cmd)
       })
       .on('error', function (err) {
-        console.log(err)
+        //console.log(err)
       })
     pump(command, res)
   }
@@ -149,6 +141,7 @@ function localfilestream(res, filepath, start, end, mimetype, size) {
 exports.getMovie = async (req, res, next) => {
   try {
     let hash = req.params.hash
+    let filmref = parseInt(req.query.id, 10)
     let basedir = movie_path + hash.substring(0, 10)
     let magnet = `magnet:?xt=urn:btih:${hash}`
     let filepath = ''
@@ -220,11 +213,16 @@ exports.getMovie = async (req, res, next) => {
         })
         engine.on('idle', () => {
           console.log(`Movie path:${basedir}/${fileName}${fileExt}`)
-          /* Temporarily removed. Will disable file checking from DB. Upcoming fix: add filmref from params
-          upsert_movie(
-            { path: `${basedir}/${fileName}${fileExt}` },
-            { magnet: hash }
-          ) */
+          if (filmref) {
+            upsert_movie(
+              {
+                path: `${basedir}/${fileName}${fileExt}`,
+                filmRef: filmref,
+                magnet: hash,
+              },
+              { magnet: hash }
+            )
+          }
         })
       } else {
         let stats = fs.statSync(filepath)
