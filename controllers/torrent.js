@@ -1,11 +1,3 @@
-/** TODO
- * Consider implementing Duplex instead of current piping
- *
- * tested with 'localhost:3000/torrent/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V?id=11'
- * -> Movie path:./movies/OZ6OLQISQ6DVUV54PDAYQTXKBWJMPF6V/[ OxTorrent.com ] Fabuleuses.2019.FRENCH.HDRip.XviD-EXTREME.avi
- */
-const util = require('util')
-
 const models = require('../models')
 const fs = require('fs')
 const path = require('path')
@@ -54,6 +46,7 @@ function streamMovie(res, file, start, end, mimetype) {
     res.writeHead(200, {
       'Content-Length': file.length,
       'Content-Type': mimetype,
+      'Cache-Control': 'no-store',
     })
     let stream = file.createReadStream({
       start: start,
@@ -69,6 +62,7 @@ function streamMovie(res, file, start, end, mimetype) {
       'Content-Length': chunkSize,
       'Content-Type': 'video/webm',
       Connection: 'keep-alive',
+      'Cache-Control': 'no-store',
     })
     let torrent = file.createReadStream({
       start: start,
@@ -101,6 +95,7 @@ function localfilestream(res, filepath, start, end, mimetype, size) {
     res.writeHead(200, {
       'Content-Length': size,
       'Content-Type': mimetype,
+      'Cache-Control': 'no-store',
     })
     let stream = fs.createReadStream(filepath, {
       start: start,
@@ -116,6 +111,7 @@ function localfilestream(res, filepath, start, end, mimetype, size) {
       'Content-Length': chunkSize,
       'Content-Type': 'video/webm',
       Connection: 'keep-alive',
+      'Cache-Control': 'no-store',
     })
     let torrent = fs.createReadStream(filepath, {
       start: start,
