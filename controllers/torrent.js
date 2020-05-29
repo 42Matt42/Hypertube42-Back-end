@@ -38,9 +38,8 @@ async function upsert_movie(values, condition) {
 
 function streamMovie(res, file, start, end, mimetype) {
   if (
-    /* Other <video> formats disabled to only send webm as possible mimetype 
     mimetype === 'video/mp4' ||
-    mimetype === 'video/ogg' || */
+    mimetype === 'video/ogg' ||
     mimetype === 'video/webm'
   ) {
     res.writeHead(200, {
@@ -88,8 +87,8 @@ function streamMovie(res, file, start, end, mimetype) {
 function localfilestream(res, filepath, start, end, mimetype, size) {
   //For on the fly conversion of saved movie, when played from a file
   if (
-    /* mimetype === 'video/mp4' ||
-    mimetype === 'video/ogg' || */
+    mimetype === 'video/mp4' ||
+    mimetype === 'video/ogg' ||
     mimetype === 'video/webm'
   ) {
     res.writeHead(200, {
@@ -244,6 +243,43 @@ exports.getMovie = async (req, res, next) => {
           localfilestream(res, filepath, start, end, mimetype, size)
         }
       }
+    })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+exports.getMimetype = (req, res, next) => {
+  try {
+    let hash = req.params.hash
+    let magnet = `magnet:?xt=urn:btih:${hash}`
+    let basedir = movie_path + hash.substring(0, 10)
+    const engine = torrentStream(magnet, {
+      connections: 100,
+      uploads: 10,
+      path: basedir,
+      verify: true,
+      trackers: tracker_list,
+    })
+    engine.on('ready', () => {
+      engine.files.forEach((file) => {
+        if (
+          path.extname(file.name) !== '.mp4' &&
+          path.extname(file.name) !== '.avi' &&
+          path.extname(file.name) !== '.ogg' &&
+          path.extname(file.name) !== '.mkv' &&
+          path.extname(file.name) !== '.webm'
+        ) {
+          file.deselect()
+          return
+        }
+        let mimetype = mime.lookup(file.name)
+        let mimeVideo = mimetype.split('/')[0]
+        if (mimeVideo === 'video') {
+          engine.destroy()
+          res.json({ 'mimetype': mimetype });
+        }
+      })
     })
   } catch (error) {
     return next(error)
