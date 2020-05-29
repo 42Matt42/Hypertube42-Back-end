@@ -2,7 +2,27 @@ const models = require('../models')
 const errors = require('../helpers/errors')
 const config = require('../config/config')
 const moment = require('moment')
+
+const path = require('path')
+const fs = require("fs")
 const {Sequelize, sequelize} = require('sequelize')
+const axios = require("axios").default;
+const OS = require('opensubtitles-api');
+
+const srt2vtt = require('srt-to-vtt')
+
+const OpenSubtitles = new OS({
+  useragent: config.OSagent,
+  username: config.OSuser,
+  password: config.OSpass,
+  ssl: true
+});
+
+var languageDictionary = {
+  'en': 'eng',
+  'fr': 'fre',
+  'es': 'spa',
+}
 
 async function createFilm(filmRef) {
   try {
@@ -159,10 +179,10 @@ exports.postView = async (req, res) => {
       date,
     })
     let result = await models.film.update({
-      viewed: date,
-    },
+        viewed: date,
+      },
       {
-        where: { id: filmId }
+        where: {id: filmId}
       })
 
     let filmInfo = await models.filmView.findOne({
@@ -181,6 +201,72 @@ exports.postView = async (req, res) => {
       status: 'Success',
       views: filmInfo,
     })
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({
+      error: error,
+    })
+  }
+
+
+}
+
+
+exports.getSubtitles = async (req, res) => {
+  try {
+    let filename
+    let imdbid = req.params.imdbid
+    let language = 'en'
+    let langCode = languageDictionary[language]
+    if (!langCode) {
+      return res.status(400).json({
+        error: "Language not found",
+      })
+    }
+    if (!imdbid) {
+      return res.status(400).json({
+        error: "Provide imdbid",
+      })
+    }
+
+    let subtitles = await OpenSubtitles.search({
+      sublanguageid: langCode,       // Can be an array.join, 'all', or be omitted.
+      // filename,                   // The video file name. Better if extension is included.
+      // season: '2',
+      // episode: '3',
+      // extensions: ['srt', 'vtt'], // Accepted extensions, defaults to 'srt'.
+      // limit: '1',                 // Can be 'best', 'all' or an arbitrary nb. Defaults to 'best'
+      imdbid,           // 'tt528809' is fine too.
+    })
+
+    if (subtitles[language]) {
+      console.log('Subtitle found:', subtitles);
+      //TODO os compatibility
+
+      // let pathname = path.join(__dirname, 'uploads', 'subtitles');
+      let pathname = path.join('uploads', 'subtitles');
+      filename = language + "." + imdbid + ".vtt";
+      let outputLocationPath = path.join(pathname, filename);
+      console.log(outputLocationPath)
+
+      let resp = await axios({
+        method: "get",
+        url: subtitles[language].url,
+        responseType: "stream",
+      })
+      resp.data.pipe(srt2vtt())
+        .pipe(fs.createWriteStream(outputLocationPath))
+
+      return res.status(200).json({
+        status: 'Success',
+        file: config.server + '/static/' + filename
+      })
+
+    } else {
+      return res.status(400).json({
+        error: "Subtitles not found",
+      })
+    }
   } catch (error) {
     console.log(error)
     return res.status(400).json({
