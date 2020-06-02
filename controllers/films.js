@@ -210,7 +210,6 @@ exports.postView = async (req, res) => {
 
 }
 
-
 exports.getSubtitles = async (req, res) => {
   try {
     let filename
@@ -235,31 +234,38 @@ exports.getSubtitles = async (req, res) => {
       // episode: '3',
       // extensions: ['srt', 'vtt'], // Accepted extensions, defaults to 'srt'.
       // limit: '1',                 // Can be 'best', 'all' or an arbitrary nb. Defaults to 'best'
-      imdbid,           // 'tt528809' is fine too.
+      imdbid,
     })
-
+    //TODO check os compatibility
     if (subtitles[language]) {
-      console.log('Subtitle found:', subtitles);
-      //TODO os compatibility
+        let pathname = path.join('uploads', 'subtitles');
+        filename = language + "." + imdbid + ".vtt";
+        let outputLocationPath = path.join(pathname, filename);
 
-      // let pathname = path.join(__dirname, 'uploads', 'subtitles');
-      let pathname = path.join('uploads', 'subtitles');
-      filename = language + "." + imdbid + ".vtt";
-      let outputLocationPath = path.join(pathname, filename);
-      console.log(outputLocationPath)
+        let resp = await axios({
+          method: "get",
+          url: subtitles[language].url,
+          responseType: "stream",
+        })
 
-      let resp = await axios({
-        method: "get",
-        url: subtitles[language].url,
-        responseType: "stream",
-      })
-      resp.data.pipe(srt2vtt())
-        .pipe(fs.createWriteStream(outputLocationPath))
-
-      return res.status(200).json({
-        status: 'Success',
-        file: config.server + '/static/' + filename
-      })
+        resp.data.pipe(srt2vtt())
+          .on('error', (e) => {
+            return res.status(400).json({
+              error: e,
+            })
+          })
+          .pipe(fs.createWriteStream(outputLocationPath))
+          .on('error', (e) => {
+            return res.status(400).json({
+              error: e,
+            })
+          })
+          .on('finish',() => {
+              return res.status(200).json({
+                status: 'Success',
+                file: config.server + '/static/' + filename
+              })
+            })
 
     } else {
       return res.status(400).json({
@@ -272,7 +278,5 @@ exports.getSubtitles = async (req, res) => {
       error: error,
     })
   }
-
-
 }
 
