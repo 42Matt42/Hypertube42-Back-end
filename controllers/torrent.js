@@ -1,4 +1,5 @@
 const models = require('../models')
+const { Op } = require('sequelize')
 const fs = require('fs')
 const path = require('path')
 const mime = require('mime')
@@ -20,6 +21,21 @@ const tracker_list = [
   'udp://p4p.arenabg.com:1337',
   'udp://tracker.leechers-paradise.org:6969',
 ]
+
+async function cleanup_movies() {
+  //finds and removes any >30 days movies
+  let now = new Date()
+  now.setDate(now.getDate() - 30)
+  const movie_list = await models.film.findAll({
+    where: { viewed: { [Op.lte]: now } },
+  })
+  if (movie_list !== null) {
+    movie_list.forEach((element) => {
+      fs.unlink(element.path)
+      element.update({ path: null })
+    })
+  }
+}
 
 async function upsert_movie(values, condition) {
   return models.film
@@ -109,6 +125,7 @@ function localfilestream(res, filepath, start, end, mimetype, size) {
 
 exports.getMovie = async (req, res, next) => {
   try {
+    cleanup_movies()
     let hash = req.params.hash
     let filmref = parseInt(req.query.id, 10)
     let basedir = movie_path + hash.substring(0, 10)
@@ -153,7 +170,9 @@ exports.getMovie = async (req, res, next) => {
             let end = fileSize - 1
             fileName = file.path.replace(path.extname(file.name), '')
             fileExt = path.extname(file.name)
-            console.log(`[FROM TORRENT] selected ${fileName}${fileExt} Size: ${fileSize}`)
+            console.log(
+              `[FROM TORRENT] selected ${fileName}${fileExt} Size: ${fileSize}`
+            )
             streamMovie(res, file, start, end, mimetype)
           })
         })
@@ -220,7 +239,7 @@ exports.getMimetype = (req, res, next) => {
         let mimeVideo = mimetype.split('/')[0]
         if (mimeVideo === 'video') {
           engine.destroy()
-          res.json({ 'mimetype': mimetype });
+          res.json({ mimetype: mimetype })
         }
       })
     })
