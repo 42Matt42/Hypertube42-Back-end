@@ -20,9 +20,9 @@ module.exports = (dbc, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      percentage: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      magnet: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       viewed: {
         type: DataTypes.DATE,
