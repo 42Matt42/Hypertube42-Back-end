@@ -21,7 +21,6 @@ const OpenSubtitles = new OS({
 var languageDictionary = {
   'en': 'eng',
   'fr': 'fre',
-  'es': 'spa',
 }
 
 async function createFilm(filmRef) {
@@ -216,7 +215,7 @@ exports.getSubtitles = async (req, res) => {
   try {
     let filename
     let imdbid = req.params.imdbid
-    let language = 'en'
+    let language = req.query.language
     let langCode = languageDictionary[language]
     if (!langCode) {
       return res.status(400).json({
