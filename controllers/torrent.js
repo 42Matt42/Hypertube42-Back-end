@@ -26,14 +26,16 @@ async function cleanup_movies() {
   //finds and removes any >30 days movies
   let now = new Date()
   now.setDate(now.getDate() - 30)
-  models.film.findAll({
-    where: { viewed: { [Op.lte]: now } },
-  }).then(function(movies) {
-    movies.forEach(element => {
-      fs.unlinkSync(element.dataValues.path)
-      models.film.destroy({where: { id: element.dataValues.id }})
-    });
-  })
+  models.film
+    .findAll({
+      where: { viewed: { [Op.lte]: now } },
+    })
+    .then(function (movies) {
+      movies.forEach((element) => {
+        fs.unlinkSync(element.dataValues.path)
+        models.film.destroy({ where: { id: element.dataValues.id } })
+      })
+    })
 }
 
 async function upsert_movie(values, condition) {
