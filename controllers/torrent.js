@@ -49,7 +49,7 @@ async function upsert_movie(values, condition) {
       return models.film.create(values)
     })
     .catch(function (err) {
-      console.log(err, values)
+      //console.log(err, values)
     })
 }
 
@@ -125,6 +125,12 @@ function localfilestream(res, filepath, start, end, mimetype, size) {
 }
 
 exports.getMovie = async (req, res, next) => {
+  if (req.params.hash.length < 32) {
+    res.status(400).json({
+      error: 'invalid hash',
+    })
+    return
+  }
   try {
     cleanup_movies()
     let hash = req.params.hash
@@ -208,12 +214,21 @@ exports.getMovie = async (req, res, next) => {
       }
     })
   } catch (error) {
-    return next(error)
+    res.status(400).json({
+      error: error,
+    })
+    return
   }
 }
 
 exports.getMimetype = (req, res, next) => {
   try {
+    if (req.params.hash.length < 32) {
+      res.status(400).json({
+        error: 'invalid hash',
+      })
+      return
+    }
     let hash = req.params.hash
     let magnet = `magnet:?xt=urn:btih:${hash}`
     let basedir = movie_path + hash.substring(0, 10)
@@ -245,6 +260,9 @@ exports.getMimetype = (req, res, next) => {
       })
     })
   } catch (error) {
-    return next(error)
+    res.status(400).json({
+      error: error,
+    })
+    return
   }
 }
