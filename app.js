@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const path = require('path')
 const bodyParser = require('body-parser')
 const models = require('./models/')
 
@@ -37,6 +38,7 @@ app.use(bodyParser.json())
 app.use('/users', usersRoutes)
 app.use('/oauth', oauthRoutes)
 app.use('/films', filmsRoutes)
+app.use('/static', express.static(path.join(__dirname, 'uploads', 'subtitles')))
 app.use('/torrent', torrentRoutes)
 
 //force:true to drop all tables every time
