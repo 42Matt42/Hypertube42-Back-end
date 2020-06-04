@@ -28,3 +28,4 @@ Thumbs.db
 /node_modules
 .env
 /config/config.json
+/uploads/subtitles/*.vtt

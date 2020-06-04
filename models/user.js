@@ -104,7 +104,7 @@ module.exports = (dbc, DataTypes) => {
         defaultValue: 'uploads/image.png',
       },
       language: {
-        type: DataTypes.ENUM('english', 'french', 'spanish'),
+        type: DataTypes.ENUM('english', 'french'),
         allowNull: false,
         defaultValue: 'english',
       },

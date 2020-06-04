@@ -24,6 +24,9 @@ module.exports = {
   clientFB: process.env.CLIENTFB,
   secretFB: process.env.SECRETFB,
   redirectFB: process.env.REDIRECTFB,
+  OSuser: process.env.OSUSER,
+  OSpass: process.env.OSPASS,
+  OSagent: process.env.OSAGENT,
 
   //TODO for dev only
   testpass: process.env.TESTPASS,

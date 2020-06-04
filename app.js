@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const path = require('path')
 const bodyParser = require('body-parser')
 const models = require('./models/')
 
@@ -7,6 +8,7 @@ const config = require('./config/config')
 const usersRoutes = require('./routes/users')
 const oauthRoutes = require('./routes/oauth')
 const filmsRoutes = require('./routes/films')
+const torrentRoutes = require('./routes/torrent')
 
 //TODO for dev only
 const seed = require('./dev/seed')
@@ -36,6 +38,8 @@ app.use(bodyParser.json())
 app.use('/users', usersRoutes)
 app.use('/oauth', oauthRoutes)
 app.use('/films', filmsRoutes)
+app.use('/static', express.static(path.join(__dirname, 'uploads', 'subtitles')))
+app.use('/torrent', torrentRoutes)
 
 //force:true to drop all tables every time
 models.dbc.sync({ force: true }).then(function () {
