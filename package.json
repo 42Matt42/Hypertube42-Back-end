@@ -5,7 +5,9 @@
   "main": "app.js",
   "scripts": {
     "test": "tape tests/*.js | tap-spec",
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "setuplinux": "sudo apt install ffmpeg",
+    "setupmac": "brew install ffmpeg"
   },
   "repository": {
     "type": "git",
