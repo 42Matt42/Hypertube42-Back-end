@@ -55,7 +55,6 @@ async function checkOrCreateUser(email, fullName, username, photo) {
       let filename = uuidv4() + path.extname(photo);
       let outputLocationPath = pathname + filename;
       await downloadFile(photo, outputLocationPath);
-      console.log(photo);
       result = await db.user.create({
         firstName: fullName.split(" ")[0],
         lastName: fullName.split(" ")[1],
@@ -136,8 +135,13 @@ exports.redirectGitHub = async (req, res) => {
     let token = await response.data.split("&")[0].split("=")[1];
     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     let userData = await axios.get("https://api.github.com/user");
-    if (!userData.data.email || !userData.data.name) {
-      return res.redirect("http://localhost:8080/login");
+    if (
+      !userData.data.email ||
+      !userData.data.name ||
+      !userData.data.login ||
+      !userData.data.avatar_url
+    ) {
+      return res.redirect( "http://localhost:8080/login");
     }
     let result = await checkOrCreateUser(
       userData.data.email,
@@ -150,6 +154,7 @@ exports.redirectGitHub = async (req, res) => {
       {
         exp,
         data: {
+          id: result.dataValues.id,
           username: result.dataValues.username,
           token: result.dataValues.access_token,
           photo: result.dataValues.photo,
@@ -167,7 +172,11 @@ exports.redirectFacebook = async (req, res) => {
   let code = req.query.code;
   try {
     let response = await axios.get(
+<<<<<<< HEAD
       `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.server}/oauth/fb`,
+=======
+      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.redirectFB}/oauth/fb`
+>>>>>>> 6a13886c47e8a7b04e5334e7f28c450b0c1e583e
     );
     let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
     let userData = await axios.get(
@@ -189,6 +198,7 @@ exports.redirectFacebook = async (req, res) => {
       {
         exp,
         data: {
+          id: result.dataValues.id,
           username: result.dataValues.username,
           token: result.dataValues.access_token,
           photo: result.dataValues.photo,
