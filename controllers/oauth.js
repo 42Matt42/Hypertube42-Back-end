@@ -141,7 +141,7 @@ exports.redirectGitHub = async (req, res) => {
       !userData.data.login ||
       !userData.data.avatar_url
     ) {
-      return res.redirect( "http://localhost:8080/login");
+      return res.redirect("http://localhost:8080/login");
     }
     let result = await checkOrCreateUser(
       userData.data.email,
@@ -172,11 +172,7 @@ exports.redirectFacebook = async (req, res) => {
   let code = req.query.code;
   try {
     let response = await axios.get(
-<<<<<<< HEAD
-      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.server}/oauth/fb`,
-=======
-      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.redirectFB}/oauth/fb`
->>>>>>> 6a13886c47e8a7b04e5334e7f28c450b0c1e583e
+      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.redirectFB}/oauth/fb`,
     );
     let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
     let userData = await axios.get(
