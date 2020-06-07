@@ -100,7 +100,7 @@ exports.redirect42 = async (req, res) => {
       userData.data.email,
       name,
       userData.data.login,
-      userData.data.image_url
+      userData.data.image_url,
     );
     const jwt_token = jwt.sign(
       {
@@ -111,7 +111,7 @@ exports.redirect42 = async (req, res) => {
           photo: result.dataValues.photo,
         },
       },
-      config.jwt
+      config.jwt,
     );
     return res.redirect("http://localhost:8080?code=" + jwt_token);
   } catch (error) {
@@ -131,19 +131,19 @@ exports.redirectGitHub = async (req, res) => {
         client_id: config.clientGH,
         client_secret: config.secretGH,
         code: code,
-      }
+      },
     );
     let token = await response.data.split("&")[0].split("=")[1];
     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     let userData = await axios.get("https://api.github.com/user");
     if (!userData.data.email || !userData.data.name) {
-      return res.redirect(304, "http://localhost:8080/login");
+      return res.redirect("http://localhost:8080/login");
     }
     let result = await checkOrCreateUser(
       userData.data.email,
       userData.data.name,
       userData.data.login,
-      userData.data.avatar_url
+      userData.data.avatar_url,
     );
     let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
     const jwt_token = jwt.sign(
@@ -155,7 +155,7 @@ exports.redirectGitHub = async (req, res) => {
           photo: result.dataValues.photo,
         },
       },
-      config.jwt
+      config.jwt,
     );
     return res.redirect("http://localhost:8080?code=" + jwt_token);
   } catch (error) {
@@ -167,11 +167,11 @@ exports.redirectFacebook = async (req, res) => {
   let code = req.query.code;
   try {
     let response = await axios.get(
-      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.server}/oauth/fb`
+      `https://graph.facebook.com/v6.0/oauth/access_token?client_id=${config.clientFB}&client_secret=${config.secretFB}&code=${code}&redirect_uri=${config.server}/oauth/fb`,
     );
     let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
     let userData = await axios.get(
-      `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`
+      `https://graph.facebook.com/v6.0/me?fields=last_name,picture{url},email,name&access_token=${response.data.access_token}`,
     );
     let result = {};
     console.log(userData.data);
@@ -180,7 +180,7 @@ exports.redirectFacebook = async (req, res) => {
         userData.data.email,
         userData.data.name,
         userData.data.last_name,
-        userData.data.picture.data.url
+        userData.data.picture.data.url,
       );
     } else {
       return res.redirect("http://localhost:8080");
@@ -194,73 +194,11 @@ exports.redirectFacebook = async (req, res) => {
           photo: result.dataValues.photo,
         },
       },
-      config.jwt
+      config.jwt,
     );
     return res.redirect("http://localhost:8080?code=" + jwt_token);
   } catch (error) {
     console.log(error);
     return res.redirect("http://localhost:8080");
-  }
-};
-exports.redirectReddit = async (req, res) => {
-  let code = req.query.code;
-  try {
-    let response = await axios.post(
-      "https://www.reddit.com/api/v1/access_token",
-      "grant_type=authorization_code&code=" +
-        code +
-        "&redirect_uri=" +
-        config.redirectReddit,
-      {
-        headers: {
-          Accept: "application/x-www-form-urlencoded",
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization:
-            "Basic " +
-            new Buffer.from(
-              `${config.clientReddit}:${config.secretReddit}`
-            ).toString("base64"),
-        },
-      }
-    );
-    let exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
-    axios.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${response.data.access_token}`;
-    let userData = await axios.get("https://oauth.reddit.com/api/v1/me");
-    console.log(userData.data);
-    // if (!userData.data.email || !userData.data.first_name || !userData.data.last_name) {
-    //     return res.redirect(304, 'http://localhost:8080/login')
-    // }
-    // let name = userData.data.first_name + ' ' + userData.data.last_name
-    // let result = await checkOrCreateUser(
-    //     userData.data.email,
-    //     name,
-    //     userData.data.login,
-    //     userData.data.image_url
-    // )
-    // const jwt_token = jwt.sign(
-    //     {
-    //         exp: exp,
-    //         data: {
-    //             id: result.dataValues.id,
-    //             username: result.dataValues.username,
-    //             photo: result.dataValues.photo,
-    //         },
-    //     },
-    //     config.jwt
-    // )
-    // return res.redirect('http://localhost:8080?code=' + jwt_token)
-  } catch (error) {
-    console.log(error);
-    if (error.response.status == 401) {
-      console.log(error.response.data);
-      return res.redirect("http://localhost:8080");
-    }
-    if (error.name === "SequelizeUniqueConstraintError")
-      return res.redirect("http://localhost:8080");
-    return res.status(error).json({
-      error: error,
-    });
   }
 };
